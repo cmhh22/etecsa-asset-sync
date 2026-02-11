@@ -22,4 +22,8 @@ urlpatterns = [
 
     # API
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
+    path('api/analytics/', views.api_analytics, name='api_analytics'),
+
+    # AI Analytics
+    path('analytics/', views.analytics_view, name='analytics'),
 ]

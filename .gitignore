@@ -37,6 +37,7 @@ OCS/*.xls
 
 # Logs
 OCS/Registros.txt
+OCS/logs/*.log
 
 # Docker
 *.pid

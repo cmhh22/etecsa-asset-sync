@@ -1,0 +1,161 @@
+name: CI — ETECSA Asset Sync
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # -----------------------------------------------------------------
+  # Lint & Format Check
+  # -----------------------------------------------------------------
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install linters
+        run: pip install flake8 isort black
+
+      - name: Run flake8
+        run: |
+          cd OCS
+          flake8 inventario/ --max-line-length=120 --exclude=migrations,__pycache__ --count --show-source --statistics
+
+      - name: Check import order (isort)
+        run: |
+          cd OCS
+          isort inventario/ --check-only --diff --profile black
+
+      - name: Check formatting (black)
+        run: |
+          cd OCS
+          black inventario/ --check --line-length=120
+
+  # -----------------------------------------------------------------
+  # Unit Tests
+  # -----------------------------------------------------------------
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testpass
+          MYSQL_DATABASE: ocsweb
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('OCS/requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-libmysqlclient-dev build-essential pkg-config
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r OCS/requirements.txt
+          pip install pytest pytest-django pytest-cov
+
+      - name: Create .env for testing
+        run: |
+          cat > OCS/.env << EOF
+          SECRET_KEY=test-secret-key-for-ci-pipeline-only
+          DEBUG=True
+          ALLOWED_HOSTS=*
+          DB_NAME=ocsweb
+          DB_USER=root
+          DB_PASSWORD=testpass
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          ARCHIVO_ECONOMIA=demo_data/AR01_demo.xlsx
+          ARCHIVO_CLASIFICADOR=demo_data/clasificador_demo.xlsx
+          EOF
+
+      - name: Run migrations
+        run: |
+          cd OCS
+          python manage.py migrate --run-syncdb
+
+      - name: Run tests with coverage
+        run: |
+          cd OCS
+          pytest inventario/tests/ -v --tb=short --cov=inventario --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: OCS/coverage.xml
+
+  # -----------------------------------------------------------------
+  # Security Scan
+  # -----------------------------------------------------------------
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install safety
+        run: pip install safety pip-audit
+
+      - name: Check for known vulnerabilities
+        run: pip-audit -r OCS/requirements.txt || true
+        continue-on-error: true
+
+  # -----------------------------------------------------------------
+  # Docker Build Test
+  # -----------------------------------------------------------------
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          cd OCS
+          docker build -t etecsa-asset-sync:ci .

@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}AI Analytics — ETECSA Asset Sync{% endblock %}
+{% block nav_analytics %}active{% endblock %}
+{% block page_title %}AI Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quality-ring {
+        width: 140px;
+        height: 140px;
+        position: relative;
+    }
+    .quality-ring canvas { display: block; }
+    .quality-grade {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .quality-grade .grade { font-size: 2rem; font-weight: 800; }
+    .quality-grade .score { font-size: 0.85rem; color: #64748b; }
+
+    .anomaly-card {
+        border-left: 4px solid;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        transition: box-shadow 0.2s;
+    }
+    .anomaly-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .anomaly-card.critical { border-color: #dc3545; }
+    .anomaly-card.warning { border-color: #ffc107; }
+    .anomaly-card.info { border-color: #0dcaf0; }
+
+    .metric-bar {
+        height: 8px;
+        border-radius: 4px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+    .metric-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.8s ease;
+    }
+
+    .rec-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    .rec-icon {
+        width: 42px; height: 42px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .priority-alta { background: #fee2e2; color: #dc2626; }
+    .priority-media { background: #fef3c7; color: #d97706; }
+    .priority-baja { background: #e0f2fe; color: #0284c7; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-pc-display fs-2 text-primary"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ summary.total_assets }}</h3>
+                <small class="text-muted">Total Activos</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ summary.critical_anomalies }}</h3>
+                <small class="text-muted">Anomalías Críticas</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-circle fs-2 text-warning"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ summary.warning_anomalies }}</h3>
+                <small class="text-muted">Advertencias</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-shield-check fs-2 text-success"></i>
+                <h3 class="fw-bold mt-2 mb-0">{{ summary.quality_grade }}</h3>
+                <small class="text-muted">Grado de Calidad</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Quality + Distribution -->
+    <div class="col-lg-5">
+        <!-- Data Quality Card -->
+        <div class="card content-card mb-4">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h6 class="fw-bold mb-0"><i class="bi bi-trophy me-2 text-warning"></i>Calidad de Datos</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-4 mb-3">
+                    <div class="quality-ring">
+                        <canvas id="qualityRing" width="140" height="140"></canvas>
+                        <div class="quality-grade">
+                            <span class="grade" id="qGrade">{{ data_quality.grade }}</span>
+                            <span class="score">{{ data_quality.score }}/100</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        {% with metrics="completeness,consistency,uniqueness,validity" %}
+                        {% for m in data_quality.issues %}
+                        <small class="text-muted d-block mb-1"><i class="bi bi-exclamation-circle text-warning me-1"></i>{{ m }}</small>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Quality Metrics Bars -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">Completitud</small>
+                        <small>{{ data_quality.completeness }}%</small>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill bg-primary" style="width: {{ data_quality.completeness }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">Consistencia</small>
+                        <small>{{ data_quality.consistency }}%</small>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill bg-success" style="width: {{ data_quality.consistency }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">Unicidad</small>
+                        <small>{{ data_quality.uniqueness }}%</small>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill bg-info" style="width: {{ data_quality.uniqueness }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="fw-semibold">Validez</small>
+                        <small>{{ data_quality.validity }}%</small>
+                    </div>
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill bg-warning" style="width: {{ data_quality.validity }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Chart -->
+        <div class="card content-card mb-4">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Distribución de Activos</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="distributionChart" height="220"></canvas>
+            </div>
+        </div>
+
+        <!-- Predictions -->
+        {% if predictions.coverage %}
+        <div class="card content-card">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h6 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Proyección de Cobertura</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Cobertura actual</span>
+                    <span class="fw-bold">{{ predictions.coverage.current_pct }}%</span>
+                </div>
+                <div class="progress mb-3" style="height: 12px; border-radius: 6px;">
+                    <div class="progress-bar bg-success" style="width: {{ predictions.coverage.current_pct }}%"></div>
+                </div>
+                <p class="text-muted small mb-2">{{ predictions.coverage.message }}</p>
+                {% if predictions.sync_estimate %}
+                <div class="d-flex gap-3 mt-3">
+                    <div class="text-center flex-fill p-2 rounded" style="background: #f0fdf4;">
+                        <div class="fw-bold text-success fs-5">~{{ predictions.sync_estimate.estimated_resolved }}</div>
+                        <small class="text-muted">Resolución estimada</small>
+                    </div>
+                    <div class="text-center flex-fill p-2 rounded" style="background: #fef3c7;">
+                        <div class="fw-bold text-warning fs-5">{{ predictions.sync_estimate.pending_assets }}</div>
+                        <small class="text-muted">Pendientes</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Anomalies + Recommendations -->
+    <div class="col-lg-7">
+        <!-- Anomalies -->
+        <div class="card content-card mb-4">
+            <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-shield-exclamation me-2 text-danger"></i>
+                    Anomalías Detectadas
+                    <span class="badge bg-secondary ms-2">{{ anomalies|length }}</span>
+                </h6>
+            </div>
+            <div class="card-body" style="max-height: 420px; overflow-y: auto;">
+                {% for anomaly in anomalies %}
+                <div class="anomaly-card {{ anomaly.severity }}">
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h6 class="fw-bold mb-0">
+                            <i class="{{ anomaly.icon }} text-{{ anomaly.color }} me-1"></i>
+                            {{ anomaly.title }}
+                        </h6>
+                        <span class="badge bg-{{ anomaly.color }} text-uppercase" style="font-size: 0.65rem;">
+                            {{ anomaly.severity }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-1">{{ anomaly.description }}</p>
+                    {% if anomaly.suggestion %}
+                    <div class="small" style="color: #4338ca;">
+                        <i class="bi bi-lightbulb me-1"></i>{{ anomaly.suggestion }}
+                    </div>
+                    {% endif %}
+                    {% if anomaly.affected_assets %}
+                    <details class="mt-2">
+                        <summary class="small text-muted" style="cursor:pointer;">
+                            Ver afectados ({{ anomaly.affected_assets|length }})
+                        </summary>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            {% for asset in anomaly.affected_assets %}
+                            <span class="badge bg-light text-dark border" style="font-size: 0.7rem;">{{ asset }}</span>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+                    No se detectaron anomalías. ¡Los datos están en buen estado!
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        {% if predictions.recommendations %}
+        <div class="card content-card mb-4">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h6 class="fw-bold mb-0"><i class="bi bi-lightbulb me-2 text-warning"></i>Recomendaciones AI</h6>
+            </div>
+            <div class="card-body">
+                {% for rec in predictions.recommendations %}
+                <div class="rec-card">
+                    <div class="rec-icon priority-{{ rec.priority }}">
+                        <i class="bi {{ rec.icon }}"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">{{ rec.action }}</div>
+                        <small class="text-muted">{{ rec.impact }}</small>
+                        <span class="badge bg-{{ rec.priority|default:'secondary' }} ms-2"
+                              style="font-size: 0.6rem; text-transform: uppercase; {% if rec.priority == 'alta' %}background-color: #dc2626 !important;{% elif rec.priority == 'media' %}background-color: #d97706 !important;{% else %}background-color: #0284c7 !important;{% endif %}">
+                            {{ rec.priority }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Building Distribution Bar Chart -->
+        {% if distribution.buildings %}
+        <div class="card content-card">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-primary"></i>Activos por Edificio</h6>
+                {% if distribution.building_balance %}
+                <small class="text-muted">Balance de distribución: {{ distribution.building_balance }}%</small>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <canvas id="buildingChart" height="200"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+    // Quality Ring
+    (function() {
+        const canvas = document.getElementById('qualityRing');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const score = {{ data_quality.score|default:0 }};
+        const angle = (score / 100) * 2 * Math.PI;
+
+        // Background ring
+        ctx.beginPath();
+        ctx.arc(70, 70, 58, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 10;
+        ctx.stroke();
+
+        // Score ring
+        const gradient = ctx.createLinearGradient(0, 0, 140, 140);
+        gradient.addColorStop(0, score >= 70 ? '#10b981' : score >= 50 ? '#f59e0b' : '#ef4444');
+        gradient.addColorStop(1, score >= 70 ? '#059669' : score >= 50 ? '#d97706' : '#dc2626');
+
+        ctx.beginPath();
+        ctx.arc(70, 70, 58, -Math.PI / 2, -Math.PI / 2 + angle);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    })();
+
+    // Distribution Doughnut
+    (function() {
+        const canvas = document.getElementById('distributionChart');
+        if (!canvas) return;
+        const data = {{ distribution.tag_status|safe }};
+        if (!data) return;
+
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    data: Object.values(data),
+                    backgroundColor: ['#10b981', '#f59e0b', '#6366f1'],
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                }]
+            },
+            options: {
+                cutout: '65%',
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } }
+                }
+            }
+        });
+    })();
+
+    // Building Bar Chart
+    (function() {
+        const canvas = document.getElementById('buildingChart');
+        if (!canvas) return;
+        const data = {{ distribution.buildings|safe }};
+        if (!data) return;
+
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'Activos',
+                    data: Object.values(data),
+                    backgroundColor: 'rgba(30, 58, 95, 0.8)',
+                    borderRadius: 6,
+                    barThickness: 28,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { precision: 0 } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    })();
+</script>
+{% endblock %}

@@ -2,11 +2,12 @@
 views.py — Django views for ETECSA Asset Sync.
 
 Provides views for the asset dashboard, TAG synchronization,
-report viewing, authentication, and data export.
+report viewing, AI analytics, authentication, and data export.
 """
 
 import os
 import logging
+from dataclasses import asdict
 
 import pandas as pd
 from django.conf import settings
@@ -24,6 +25,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import AccountInfo
 from .forms import LoginForm, RegistroForm
+from .services.analytics import AssetAnalyticsEngine
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +176,35 @@ def api_dashboard_stats(request):
         "empty_inventory": cuentas.filter(Q(fields_3__isnull=True) | Q(fields_3="")).count(),
         "buildings": buildings,
     })
+
+
+# ---------------------------------------------------------------------------
+# AI Analytics
+# ---------------------------------------------------------------------------
+@login_required
+def analytics_view(request):
+    """AI-powered analytics dashboard with anomaly detection and data quality."""
+    engine = AssetAnalyticsEngine()
+    result = engine.run_full_analysis()
+    result_dict = asdict(result)
+
+    context = {
+        "anomalies": result.anomalies,
+        "data_quality": result.data_quality,
+        "distribution": result.distribution,
+        "predictions": result.predictions,
+        "summary": result.summary,
+        "result_json": result_dict,
+    }
+    return render(request, "analytics.html", context)
+
+
+@login_required
+def api_analytics(request):
+    """Return full AI analytics results as JSON."""
+    engine = AssetAnalyticsEngine()
+    result = engine.run_full_analysis()
+    return JsonResponse(asdict(result), safe=False)
 
 
 # ---------------------------------------------------------------------------
