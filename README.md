@@ -27,7 +27,20 @@
 
 **ETECSA Asset Sync** is a data automation tool built for **ETECSA** (Empresa de Telecomunicaciones de Cuba S.A.) — Cienfuegos province. It automates the process of cross-referencing IT asset inventory data across multiple departmental databases (**IT, HR, Finance**) and municipal offices, replacing a fully manual workflow.
 
-The system was **deployed in production** and successfully processed hundreds of assets across all municipal offices in Cienfuegos province.
+### ⚡️ Production Deployment
+
+The **original Python script** (`script_actualizar_TAG.py`) was deployed in production at ETECSA Cienfuegos and **is still operational today**, successfully processing hundreds of assets across all municipal offices in the province.
+
+### 🌐 This Repository
+
+This GitHub project is a **modernized demonstration version** that includes:
+- The original production script (preserved as-is)
+- A full-stack **Django web interface** for portfolio demonstration
+- **AI-powered analytics engine** with anomaly detection
+- **45+ automated tests** with CI/CD pipeline
+- Docker containerization for easy deployment
+
+**Note:** The web interface is a portfolio enhancement. The actual ETECSA production system uses the standalone Python script with scheduled execution.
 
 ### The Problem
 
@@ -42,14 +55,18 @@ This process was **time-consuming, error-prone**, and required navigating 3 diff
 
 ### The Solution
 
-A Python script that:
+**Original Production Script** (`script_actualizar_TAG.py`):
 1. **Reads** all assets from the OCS Inventory MySQL database
 2. **Cross-references** each inventory number against the Finance Excel report
 3. **Resolves** office/building information from the HR Locations Classifier
 4. **Updates** TAG fields in bulk with the format `Building-OfficeName`
 5. **Generates** comprehensive Excel reports identifying anomalies
 
-Plus a **Django web interface** for operators to trigger syncs and view reports.
+**Portfolio Enhancement** (this repo):
+- **Django web interface** for triggering syncs and viewing reports
+- **AI analytics dashboard** with z-score outlier detection and data quality metrics
+- **REST API** endpoints for integration
+- **Management commands** for automation
 
 ---
 
@@ -305,7 +322,6 @@ etecsa-asset-sync/
 ├── Dockerfile
 ├── .dockerignore
 ├── .gitignore
-├── CONTRIBUTING.md
 └── README.md
 ```
 
@@ -365,9 +381,23 @@ docker-compose exec web python manage.py collectstatic --noinput
 
 ## Context
 
-This project was developed and deployed at **ETECSA Cienfuegos** (Cuba's national telecom company) to automate IT asset inventory management across the province. It replaced a manual process that required operators to cross-reference data across three different departmental systems for each asset.
+### Real-World Deployment
 
-The production deployment successfully processed all computer assets across municipal offices in the Cienfuegos province, significantly reducing the time and errors associated with manual TAG assignment.
+This project originated at **ETECSA Cienfuegos** (Cuba's national telecom company) to automate IT asset inventory management across the province. 
+
+**What went to production:**
+- The standalone Python script (`script_actualizar_TAG.py`)
+- Automated TAG synchronization for hundreds of assets
+- Excel report generation for anomaly tracking
+- **Status:** Still operational and processing assets today at ETECSA Cienfuegos
+
+**This GitHub repository:**
+- Preserves the original production script
+- Adds a modern Django web interface as a portfolio demonstration
+- Includes AI analytics, automated testing, and CI/CD pipeline
+- Demonstrates full-stack development and DevOps capabilities
+
+The production deployment successfully processed all computer assets across municipal offices in the Cienfuegos province, significantly reducing the time and errors associated with manual TAG assignment. The script runs on a scheduled basis and continues to maintain data integrity across departmental systems.
 
 ---
 
