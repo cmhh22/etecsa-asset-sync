@@ -70,14 +70,22 @@ python manage.py migrate && python manage.py seed_demo
 python manage.py runserver
 ```
 
-### Option 3: Deploy to Railway (Free Tier)
+### Option 3: Deploy Free (Fly.io, Render, PythonAnywhere)
 
-1. Push to GitHub
-2. Railway.app → "New Project" → Select `etecsa-asset-sync`
-3. Add MySQL database (auto-configures `DATABASE_URL`)
-4. Set env vars: `SECRET_KEY`, `DEBUG=False`, `CSRF_TRUSTED_ORIGINS`
-5. Build: `pip install -r OCS/requirements.txt && cd OCS && python manage.py collectstatic --noinput`
-6. Start: `cd OCS && gunicorn OCS.wsgi:application --bind 0.0.0.0:$PORT`
+**Recommended**: Fly.io + PlanetScale (always-on, HTTPS, scalable)
+
+```bash
+# Install Fly CLI (Windows)
+iwr https://fly.io/install.ps1 -useb | iex
+
+# Deploy
+flyctl auth login
+flyctl launch  # Follow prompts
+flyctl secrets set SECRET_KEY=your-key DATABASE_URL=mysql://...
+flyctl ssh console -C "cd /app && python manage.py migrate && python manage.py createsuperuser"
+```
+
+📖 **[Full free deployment guide](docs/DEPLOYMENT_FREE.md)** — Fly.io, Render, PythonAnywhere
 
 ---
 
@@ -155,7 +163,8 @@ Built-in intelligence without external APIs:
 ## Documentation
 
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, services layer, database schema, security
-- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Docker, Railway, Render, VPS (Ubuntu), environment variables
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Docker, Render, VPS (Ubuntu), environment variables
+- **[DEPLOYMENT_FREE.md](docs/DEPLOYMENT_FREE.md)** — 💰 Free hosting options: Fly.io, Render, PythonAnywhere
 
 ---
 
