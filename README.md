@@ -70,15 +70,16 @@ python manage.py migrate && python manage.py seed_demo
 python manage.py runserver
 ```
 
-### Option 3: Deploy Free on Render (No Credit Card)
+### Option 3: Deploy Free on PythonAnywhere (No Credit Card)
 
-1. Go to [render.com](https://render.com) → Sign up with GitHub (free, no card)
-2. Click **"New +"** → **"Web Service"** → Connect `etecsa-asset-sync`
-3. Render auto-detects `render.yaml` and configures everything
-4. Click **"Create Web Service"** → Wait ~3 min for deploy
-5. Your app: `https://etecsa-asset-sync.onrender.com` (admin / admin123)
+**100% free forever, no credit card required** — Perfect for portfolio/demo:
 
-> **Note:** Free tier sleeps after 15 min of inactivity (~30s to wake up). Data reseeds on each deploy.
+1. Sign up at [PythonAnywhere](https://www.pythonanywhere.com/registration/register/beginner/)
+2. Open **Bash console** → Clone repo + setup virtualenv
+3. Configure **Web app** → Set WSGI + static files paths
+4. **Reload** → Your app: `http://your-username.pythonanywhere.com`
+
+📖 **[Full PythonAnywhere deployment guide](docs/PYTHONANYWHERE_DEPLOY.md)** (paso a paso en español)
 
 ---
 
@@ -157,6 +158,7 @@ Built-in intelligence without external APIs:
 
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, services layer, database schema, security
 - **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Docker, Render, VPS (Ubuntu), environment variables
+- **[PYTHONANYWHERE_DEPLOY.md](docs/PYTHONANYWHERE_DEPLOY.md)** — 🆓 FREE deployment (no credit card)
 
 ---
 
