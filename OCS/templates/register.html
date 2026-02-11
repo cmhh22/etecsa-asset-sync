@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #001f3f, #00557f);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            height: 320px; /* Altura fija para evitar cambios */
+            border: 1px solid #ccc;
+            position: relative; /* Para que el mensaje de registro quede dentro del contenedor */
+        }
+
+        .register-form h2 {
+            color: #002d4f;
+            font-family: 'Quicksand', sans-serif;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        .input-group input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #002d4f;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #004080;
+        }
+
+        .form-options {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .form-options a {
+            color: #555;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+
+        /* Mensaje de registro */
+        .box-info {
+            position: absolute;
+            bottom: 30px; /* Posiciona el mensaje en la parte inferior de la caja */
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #2ecc71;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .box-info.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <form id="register_form" class="register-form">
+            {% csrf_token %}
+            <h2>Registro</h2>
+            <div class="input-group">
+                <input type="text" id="username" placeholder="Usuario" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Contraseña" required>
+            </div>
+            <button type="submit" id="do_register">Registrarse</button>
+            <div class="form-options">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+                <a href="{% url 'login' %}">Iniciar Sesión</a>
+            </div>
+        </form>
+        <div class="box-info" id="registerInfo">
+            ¡Registro exitoso!
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#do_register").click(function() {
+                var username = $("#username").val().trim();
+                var password = $("#password").val().trim();
+                var proceed = true;
+
+                // Validar si los campos están completos
+                if (!username || !password) {
+                    $("#registerInfo").text("Por favor completa todos los campos.")
+                        .css("color", "#e74c3c")
+                        .addClass("visible");
+                    proceed = false;
+                }
+
+                if (proceed) {
+                    // Enviar datos de registro a través de AJAX
+                    $.ajax({
+                        url: "{% url 'register' %}",
+                        type: "POST",
+                        data: {
+                            username: username,
+                            password: password,
+                            csrfmiddlewaretoken: '{{ csrf_token }}',
+                        },
+                        success: function(response) {
+                            $("#registerInfo").text("¡Registro exitoso!")
+                                .css("color", "#2ecc71")
+                                .addClass("visible");
+                        },
+                        error: function(xhr) {
+                            $("#registerInfo").text(xhr.responseJSON.error)
+                                .css("color", "#e74c3c")
+                                .addClass("visible");
+                        }
+                    });
+                }
+
+                setTimeout(function() {
+                    $("#registerInfo").removeClass("visible");
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

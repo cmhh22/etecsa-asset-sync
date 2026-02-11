@@ -1,0 +1,22 @@
+# Core
+Django==5.1.1
+mysqlclient==2.2.4
+
+# Data Processing
+pandas==2.2.3
+numpy==2.1.1
+openpyxl==3.1.5
+
+# Configuration
+python-decouple==3.8
+
+# Django Dependencies
+asgiref==3.8.1
+sqlparse==0.5.1
+tzdata==2024.2
+
+# Pandas Dependencies
+python-dateutil==2.9.0.post0
+pytz==2024.2
+six==1.16.0
+et-xmlfile==1.1.0

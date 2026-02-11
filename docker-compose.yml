@@ -1,0 +1,45 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: etecsa2024
+      MYSQL_DATABASE: ocsweb
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./OCS:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SECRET_KEY=docker-dev-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DB_ENGINE=django.db.backends.mysql
+      - DB_NAME=ocsweb
+      - DB_USER=root
+      - DB_PASSWORD=etecsa2024
+      - DB_HOST=db
+      - DB_PORT=3306
+      - EXCEL_ECONOMIA=demo_data/AR01_demo.xlsx
+      - EXCEL_CLASIFICADOR=demo_data/clasificador_demo.xlsx
+
+volumes:
+  mysql_data:

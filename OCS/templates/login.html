@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Open Sans', sans-serif;
+            background: linear-gradient(135deg, #001f3f, #00557f); /* Fondo degradado en tonos azules */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco con transparencia */
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #ccc; /* Borde sutil */
+        }
+
+        .login-container:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-form h2 {
+            color: #002d4f;
+            font-family: 'Quicksand', sans-serif;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc; /* Borde más sutil */
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+            transition: border 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .input-group input:focus {
+            border-color: #007bff; /* Color de borde al enfocar */
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+
+        .input-group span {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 16px;
+            display: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .input-group .i-warning {
+            color: #f1c40f;
+        }
+
+        .input-group .i-save {
+            color: #2ecc71;
+        }
+
+        .input-group .i-close {
+            color: #e74c3c;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #002d4f;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #004080;
+            transform: translateY(-2px);
+        }
+
+        .form-options {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .form-options a {
+            color: #555;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .form-options a:hover {
+            color: #002d4f;
+        }
+
+        .box-info {
+            margin-top: 10px;
+            text-align: center;
+            color: #002d4f;
+            font-family: 'Quicksand', sans-serif;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .box-info.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <form id="login_form" class="login-form" method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <h2>Iniciar Sesión</h2>
+            <div class="input-group">
+                <input type="text" name="username" placeholder="Usuario" required>
+                <span class="i-warning">!</span>
+            </div>
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Contraseña" required>
+                <span class="i-warning">!</span>
+            </div>
+            <button type="submit">Ingresar</button> <!-- Cambiado a submit -->
+            <div class="form-options">
+                <a href="#">¿Olvidaste tu contraseña?</a>
+                <a href="{% url 'register' %}">Crear cuenta</a>
+            </div>
+        </form>        
+        <div class="box-info" id="loginInfo">
+            ¡Bienvenido de nuevo!
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Animación al hacer clic en login
+            $("#do_login").click(function() { 
+                $(".input-group span").hide();
+                $(".input-group input").removeClass("i-warning");
+
+                var proceed = true;
+                $("#login_form input").each(function(){
+                    if(!$.trim($(this).val())){
+                        $(this).next('span').show().addClass("i-warning");
+                        proceed = false;
+                    }
+                });
+
+                if(proceed) {
+                    $("#loginInfo").text("¡Ingreso exitoso!").css("color", "#2ecc71").addClass("visible");
+                } else {
+                    $("#loginInfo").text("Por favor completa todos los campos.").css("color", "#e74c3c").addClass("visible");
+                }
+
+                setTimeout(function(){
+                    $("#loginInfo").removeClass("visible");
+                }, 2000);
+            });
+
+            // Ocultar las advertencias cuando se empieza a escribir
+            $("#login_form input").keyup(function() { 
+                $(this).next('span').hide();
+            });
+
+            // Efecto de entrada suave al cargar la página
+            $('.login-container').css('transform', 'scale(1)').css('box-shadow', '0 15px 40px rgba(0, 0, 0, 0.2)');
+        });
+    </script>
+</body>
+</html>
