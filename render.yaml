@@ -1,0 +1,27 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# Deploy: Connect repo on Render → auto-detects this file
+
+services:
+  - type: web
+    name: etecsa-asset-sync
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: cd OCS && gunicorn OCS.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://etecsa-asset-sync.onrender.com"
+      - key: DB_ENGINE
+        value: "django.db.backends.sqlite3"
+      - key: DB_NAME
+        value: "db.sqlite3"
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: PYTHON_VERSION
+        value: "3.12.0"

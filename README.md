@@ -70,22 +70,15 @@ python manage.py migrate && python manage.py seed_demo
 python manage.py runserver
 ```
 
-### Option 3: Deploy Free (Fly.io, Render, PythonAnywhere)
+### Option 3: Deploy Free on Render (No Credit Card)
 
-**Recommended**: Fly.io + PlanetScale (always-on, HTTPS, scalable)
+1. Go to [render.com](https://render.com) → Sign up with GitHub (free, no card)
+2. Click **"New +"** → **"Web Service"** → Connect `etecsa-asset-sync`
+3. Render auto-detects `render.yaml` and configures everything
+4. Click **"Create Web Service"** → Wait ~3 min for deploy
+5. Your app: `https://etecsa-asset-sync.onrender.com` (admin / admin123)
 
-```bash
-# Install Fly CLI (Windows)
-iwr https://fly.io/install.ps1 -useb | iex
-
-# Deploy
-flyctl auth login
-flyctl launch  # Follow prompts
-flyctl secrets set SECRET_KEY=your-key DATABASE_URL=mysql://...
-flyctl ssh console -C "cd /app && python manage.py migrate && python manage.py createsuperuser"
-```
-
-📖 **[Full free deployment guide](docs/DEPLOYMENT_FREE.md)** — Fly.io, Render, PythonAnywhere
+> **Note:** Free tier sleeps after 15 min of inactivity (~30s to wake up). Data reseeds on each deploy.
 
 ---
 
@@ -164,7 +157,6 @@ Built-in intelligence without external APIs:
 
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, services layer, database schema, security
 - **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Docker, Render, VPS (Ubuntu), environment variables
-- **[DEPLOYMENT_FREE.md](docs/DEPLOYMENT_FREE.md)** — 💰 Free hosting options: Fly.io, Render, PythonAnywhere
 
 ---
 
