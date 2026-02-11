@@ -10,6 +10,10 @@ openpyxl==3.1.5
 # Configuration
 python-decouple==3.8
 
+# Production Server
+gunicorn==22.0.0
+whitenoise==6.7.0
+
 # Django Dependencies
 asgiref==3.8.1
 sqlparse==0.5.1

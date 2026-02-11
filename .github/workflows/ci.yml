@@ -156,6 +156,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: |
-          cd OCS
-          docker build -t etecsa-asset-sync:ci .
+        run: docker build -t etecsa-asset-sync:ci .

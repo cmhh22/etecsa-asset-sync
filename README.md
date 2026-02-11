@@ -120,15 +120,15 @@ Plus a **Django web interface** for operators to trigger syncs and view reports.
 git clone https://github.com/YOUR_USERNAME/etecsa-asset-sync.git
 cd etecsa-asset-sync
 
-# Start MySQL + Django
-docker-compose up -d
+# Start MySQL + Django (Gunicorn production server)
+docker-compose up -d --build
 
-# Run migrations and create demo data
-docker-compose exec web python manage.py migrate
-docker-compose exec web python manage.py loaddata demo_data/fixtures.json
+# Seed demo data
+docker-compose exec web python manage.py seed_demo
 
 # Access the app
 open http://localhost:8000
+# Login: admin / admin123
 ```
 
 ### Option 2: Manual Setup
@@ -150,13 +150,17 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your database credentials
+# Edit .env — for quick demo without MySQL, set:
+#   DB_ENGINE=django.db.backends.sqlite3
+#   DB_NAME=db.sqlite3
 
-# Run migrations
+# Run migrations and seed demo data
 python manage.py migrate
+python manage.py seed_demo
 
 # Start the development server
 python manage.py runserver
+# Login at http://localhost:8000 with admin / admin123
 ```
 
 ### Management Commands
@@ -170,6 +174,10 @@ python manage.py sync_tags
 # Run AI analytics (anomaly detection + data quality)
 python manage.py analyze_assets
 python manage.py analyze_assets --json --output report.json
+
+# Seed/reset demo data
+python manage.py seed_demo
+python manage.py seed_demo --reset
 
 # Legacy script (still functional)
 python script_actualizar_TAG.py
@@ -279,7 +287,8 @@ etecsa-asset-sync/
 │   │   │   └── analytics.py          # AI analytics engine
 │   │   ├── management/commands/      # CLI commands
 │   │   │   ├── sync_tags.py          # TAG sync command
-│   │   │   └── analyze_assets.py     # AI analytics command
+│   │   │   ├── analyze_assets.py     # AI analytics command
+│   │   │   └── seed_demo.py          # Demo data seeder
 │   │   └── tests/                    # Test suite (45+ tests)
 │   │       ├── test_models.py
 │   │       ├── test_views.py
@@ -294,9 +303,44 @@ etecsa-asset-sync/
 ├── .github/workflows/ci.yml          # GitHub Actions CI pipeline
 ├── docker-compose.yml
 ├── Dockerfile
+├── .dockerignore
 ├── .gitignore
+├── CONTRIBUTING.md
 └── README.md
 ```
+
+---
+
+## Deployment
+
+The project is production-ready with:
+
+- **Gunicorn** WSGI server (replaces Django's dev server)
+- **WhiteNoise** for static file serving without Nginx
+- **Security hardening** auto-enabled when `DEBUG=False` (HSTS, secure cookies, XSS protection)
+- **Docker** multi-container setup with MySQL health checks
+
+### Deploy with Docker (Production)
+
+```bash
+# 1. Edit docker-compose.yml — change SECRET_KEY and MYSQL_ROOT_PASSWORD
+# 2. Build and run
+docker-compose up -d --build
+
+# 3. Run migrations + seed data
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py seed_demo
+docker-compose exec web python manage.py collectstatic --noinput
+```
+
+### Deploy to Railway / Render / Fly.io
+
+1. Push to GitHub
+2. Connect the repo to your hosting platform
+3. Set environment variables from `.env.example`
+4. Set build command: `pip install -r OCS/requirements.txt`
+5. Set start command: `cd OCS && gunicorn OCS.wsgi:application --bind 0.0.0.0:$PORT`
+6. Add `CSRF_TRUSTED_ORIGINS=https://your-domain.com` to env vars
 
 ---
 
@@ -313,6 +357,7 @@ etecsa-asset-sync/
 | **Testing** | pytest, pytest-django, pytest-cov (45+ tests) |
 | **CI/CD** | GitHub Actions (lint → test → security → docker) |
 | **Code Quality** | flake8, black, isort |
+| **Production** | Gunicorn, WhiteNoise |
 | **Containerization** | Docker, Docker Compose |
 | **Configuration** | python-decouple |
 

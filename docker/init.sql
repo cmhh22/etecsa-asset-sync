@@ -1,48 +1,47 @@
--- ETECSA Asset Sync - Demo Database Schema
--- This creates the OCS Inventory accountinfo table structure
+-- ETECSA Asset Sync — Demo Database Schema
+-- Creates the OCS Inventory accountinfo table matching the Django model
 
 CREATE DATABASE IF NOT EXISTS ocsweb;
 USE ocsweb;
 
 CREATE TABLE IF NOT EXISTS accountinfo (
-    HARDWARE_ID INT NOT NULL AUTO_INCREMENT,
-    TAG VARCHAR(255) DEFAULT NULL,
-    fields_3 VARCHAR(255) DEFAULT NULL COMMENT 'Numero de Inventario',
-    fields_4 VARCHAR(255) DEFAULT NULL,
-    fields_5 VARCHAR(255) DEFAULT NULL,
-    fields_6 VARCHAR(255) DEFAULT NULL,
-    fields_7 VARCHAR(255) DEFAULT NULL,
-    fields_8 VARCHAR(255) DEFAULT NULL,
-    fields_9 VARCHAR(255) DEFAULT NULL,
-    fields_10 VARCHAR(255) DEFAULT NULL,
-    fields_11 VARCHAR(255) DEFAULT NULL,
-    PRIMARY KEY (HARDWARE_ID)
+    hardware_id VARCHAR(100) NOT NULL,
+    tag VARCHAR(100) DEFAULT '',
+    edificio VARCHAR(100) DEFAULT '',
+    noinventario VARCHAR(100) DEFAULT '',
+    usuario VARCHAR(100) DEFAULT '',
+    observaciones TEXT DEFAULT NULL,
+    fields_3 VARCHAR(100) DEFAULT NULL COMMENT 'Numero de Inventario',
+    fields_4 VARCHAR(100) DEFAULT NULL,
+    fields_5 VARCHAR(100) DEFAULT NULL,
+    fields_6 VARCHAR(100) DEFAULT NULL,
+    fields_7 VARCHAR(100) DEFAULT NULL,
+    fields_8 VARCHAR(100) DEFAULT NULL,
+    fields_9 VARCHAR(100) DEFAULT NULL,
+    fields_10 VARCHAR(100) DEFAULT NULL,
+    fields_11 VARCHAR(100) DEFAULT NULL,
+    PRIMARY KEY (hardware_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Insert demo data (fictional inventory numbers and data)
-INSERT INTO accountinfo (HARDWARE_ID, TAG, fields_3) VALUES
-(1, NULL, 'INV-CFG-001'),
-(2, NULL, 'INV-CFG-002'),
-(3, NULL, 'INV-CFG-003'),
-(4, NULL, 'INV-CFG-004'),
-(5, NULL, 'INV-CFG-005'),
-(6, NULL, 'INV-CFG-006'),
-(7, NULL, 'INV-CFG-007'),
-(8, NULL, 'INV-CFG-008'),
-(9, NULL, 'INV-CFG-009'),
-(10, NULL, 'INV-CFG-010'),
-(11, NULL, 'INV-CFG-011'),
-(12, NULL, 'INV-CFG-012'),
-(13, NULL, 'INV-CFG-003'),   -- Duplicate of INV-CFG-003
-(14, NULL, 'MV'),             -- Virtual Machine
-(15, NULL, 'MV'),             -- Virtual Machine
-(16, NULL, NULL),             -- Empty inventory
-(17, NULL, NULL),             -- Empty inventory
-(18, NULL, 'INV-CFG-013'),
-(19, NULL, 'INV-CFG-014'),
-(20, NULL, 'INV-CFG-015'),
-(21, NULL, 'INV-CFG-099'),   -- Not in AR01 (anomaly)
-(22, NULL, 'INV-CFG-098'),   -- Not in AR01 (anomaly)
-(23, NULL, 'INV-CFG-016'),
-(24, NULL, 'INV-CFG-017'),
-(25, NULL, 'INV-CFG-018');
+-- Insert demo data (fictional — does not contain real ETECSA information)
+INSERT INTO accountinfo (hardware_id, tag, edificio, noinventario, usuario, fields_3) VALUES
+('1001', 'DTCFG-Despacho Dir', 'DTCFG', '180045', 'Juan Perez', '180045'),
+('1002', 'DTCFG-Contabilidad', 'DTCFG', '180046', 'Maria Garcia', '180046'),
+('1003', 'CCFG_CENTRO-RRHH', 'CCFG_CENTRO', '180047', 'Carlos Lopez', '180047'),
+('1004', 'CCFG_PRADO-Comercial', 'CCFG_PRADO', '180048', 'Ana Rodriguez', '180048'),
+('1005', 'DTCFG-Area Tecnica', 'DTCFG', '180049', 'Pedro Sanchez', '180049'),
+('1006', 'DTCFG-Direccion', 'DTCFG', '180050', 'Director Provincial', '180050'),
+('1007', 'MUN_RODAS-Oficina', 'MUN_RODAS', '180051', 'Luis Hernandez', '180051'),
+('1008', 'MUN_CRUCES-Oficina', 'MUN_CRUCES', '180052', 'Sofia Martinez', '180052'),
+('1009', 'DTCFG-Datacenter', 'DTCFG', '180054', 'Admin Sistemas', '180054'),
+('1010', 'CCFG_CENTRO-Almacen', 'CCFG_CENTRO', '180055', 'Teresa Gomez', '180055'),
+('1011', 'DTCFG-Juridico', 'DTCFG', '180056', 'Fernando Ruiz', '180056'),
+('1012', '', '', '180057', 'Test VM', 'MV'),
+('1013', 'CCFG_PRADO-Recepcion', 'CCFG_PRADO', '180058', 'Marta Suarez', '180058'),
+('1014', 'DTCFG-Taller', 'DTCFG', '180059', 'Miguel Torres', '180059'),
+('1015', 'DTCFG-Despacho Dir', 'DTCFG', '180045', 'Juan Perez', '180045'),
+('1016', 'DTCFG-SinDoc', 'DTCFG', '', 'Sin Inventario', ''),
+('1017', '', '', '180060', 'Nuevo Equipo', '180060'),
+('1018', 'CCFG_CENTRO-Planificacion', 'CCFG_CENTRO', '180061', 'Laura Vega', '180061'),
+('1019', 'MUN_CRUCES-Comercial', 'MUN_CRUCES', '180062', 'Diego Mora', '180062'),
+('1020', '', '', '180063', 'Roberto Diaz', '180063');

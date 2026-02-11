@@ -16,13 +16,19 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies
 COPY OCS/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt gunicorn==22.0.0 whitenoise==6.7.0
 
 # Copy project
 COPY OCS/ .
 
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Collect static files
+RUN SECRET_KEY=build-placeholder python manage.py collectstatic --noinput 2>/dev/null || true
+
 # Expose port
 EXPOSE 8000
 
-# Run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Production server
+CMD ["gunicorn", "OCS.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
