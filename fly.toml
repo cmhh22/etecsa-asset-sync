@@ -1,0 +1,50 @@
+# fly.toml app configuration file generated for etecsa-asset-sync
+# https://fly.io/docs/reference/configuration/
+
+app = "etecsa-asset-sync"
+primary_region = "mia"  # Miami - closest to Cuba
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8000"
+  ALLOWED_HOSTS = ".fly.dev"
+  CSRF_TRUSTED_ORIGINS = "https://*.fly.dev"
+  DEBUG = "False"
+  SECURE_SSL_REDIRECT = "True"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8000
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "30s"
