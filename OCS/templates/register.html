@@ -3,171 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <title>Registro — ETECSA Asset Sync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: 'Open Sans', sans-serif;
-            background: linear-gradient(135deg, #001f3f, #00557f);
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .register-container {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 350px;
-            height: 320px; /* Altura fija para evitar cambios */
-            border: 1px solid #ccc;
-            position: relative; /* Para que el mensaje de registro quede dentro del contenedor */
-        }
-
-        .register-form h2 {
-            color: #002d4f;
-            font-family: 'Quicksand', sans-serif;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .input-group {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);
             position: relative;
-            margin-bottom: 20px;
+            overflow: hidden;
         }
 
-        .input-group input {
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+
+        .register-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-family: 'Open Sans', sans-serif;
+            max-width: 420px;
+            padding: 48px 40px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp .5s ease-out;
         }
 
-        .input-group input:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-            outline: none;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #002d4f;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        button:hover {
-            background-color: #004080;
-        }
-
-        .form-options {
-            margin-top: 20px;
+        .logo-area {
             text-align: center;
+            margin-bottom: 32px;
         }
 
-        .form-options a {
-            color: #555;
-            text-decoration: none;
-            margin: 0 10px;
+        .logo-area .icon-circle {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #1e3a5f, #0c4a6e);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .logo-area .icon-circle i { font-size: 28px; color: #fff; }
+        .logo-area h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .logo-area p { font-size: 14px; color: #64748b; }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             font-size: 14px;
         }
 
-        /* Mensaje de registro */
-        .box-info {
-            position: absolute;
-            bottom: 30px; /* Posiciona el mensaje en la parte inferior de la caja */
-            left: 0;
-            right: 0;
-            text-align: center;
-            color: #2ecc71;
-            font-family: 'Quicksand', sans-serif;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
         }
 
-        .box-info.visible {
-            opacity: 1;
+        .input-wrapper { position: relative; }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 14px 12px 42px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            transition: all .2s;
+            color: #1e293b;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+            background: #fff;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, #1e3a5f, #0c4a6e);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-register:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(14, 74, 110, .4);
+        }
+
+        .btn-register:active { transform: translateY(0); }
+
+        .form-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .form-footer a {
+            color: #1e3a5f;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color .2s;
+        }
+
+        .form-footer a:hover { color: #0c4a6e; text-decoration: underline; }
+
+        @media (max-width: 480px) {
+            .register-card { margin: 16px; padding: 32px 24px; }
         }
     </style>
 </head>
 <body>
-    <div class="register-container">
-        <form id="register_form" class="register-form">
+    <div class="register-card">
+        <div class="logo-area">
+            <div class="icon-circle">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h1>Crear Cuenta</h1>
+            <p>Regístrate en ETECSA Asset Sync</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="bi bi-exclamation-circle"></i> {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="{% url 'register' %}">
             {% csrf_token %}
-            <h2>Registro</h2>
-            <div class="input-group">
-                <input type="text" id="username" placeholder="Usuario" required>
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person"></i>
+                    <input type="text" id="username" name="username" placeholder="Elige un nombre de usuario" required autofocus>
+                </div>
             </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Contraseña" required>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Crea una contraseña" required>
+                </div>
             </div>
-            <button type="submit" id="do_register">Registrarse</button>
-            <div class="form-options">
-                <a href="#">¿Olvidaste tu contraseña?</a>
-                <a href="{% url 'login' %}">Iniciar Sesión</a>
-            </div>
+            <button type="submit" class="btn-register">
+                <i class="bi bi-person-check"></i> Registrarse
+            </button>
         </form>
-        <div class="box-info" id="registerInfo">
-            ¡Registro exitoso!
+
+        <div class="form-footer">
+            ¿Ya tienes cuenta? <a href="{% url 'login' %}">Iniciar Sesión</a>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $("#do_register").click(function() {
-                var username = $("#username").val().trim();
-                var password = $("#password").val().trim();
-                var proceed = true;
-
-                // Validar si los campos están completos
-                if (!username || !password) {
-                    $("#registerInfo").text("Por favor completa todos los campos.")
-                        .css("color", "#e74c3c")
-                        .addClass("visible");
-                    proceed = false;
-                }
-
-                if (proceed) {
-                    // Enviar datos de registro a través de AJAX
-                    $.ajax({
-                        url: "{% url 'register' %}",
-                        type: "POST",
-                        data: {
-                            username: username,
-                            password: password,
-                            csrfmiddlewaretoken: '{{ csrf_token }}',
-                        },
-                        success: function(response) {
-                            $("#registerInfo").text("¡Registro exitoso!")
-                                .css("color", "#2ecc71")
-                                .addClass("visible");
-                        },
-                        error: function(xhr) {
-                            $("#registerInfo").text(xhr.responseJSON.error)
-                                .css("color", "#e74c3c")
-                                .addClass("visible");
-                        }
-                    });
-                }
-
-                setTimeout(function() {
-                    $("#registerInfo").removeClass("visible");
-                }, 2000);
-            });
-        });
-    </script>
 </body>
 </html>

@@ -1,226 +1,76 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes</title>
-    <link rel="stylesheet" href="{% static 'tu_estilo.css' %}"> <!-- Incluye tu CSS aquí -->
-    <style>
-        /* Fuente moderna desde Google Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+{% extends "base.html" %}
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f3f4f6;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            position: relative; /* Para posicionar el botón en relación al body */
-        }
+{% block title %}Reportes — ETECSA Asset Sync{% endblock %}
+{% block nav_reports %}active{% endblock %}
+{% block page_title %}Reportes de Sincronización{% endblock %}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            transition: box-shadow 0.3s ease;
-        }
+{% block content %}
+<!-- Sheet Selector & Actions -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <form method="GET" class="d-flex align-items-center gap-2">
+            <label for="hoja" class="form-label mb-0 fw-semibold text-secondary">Hoja:</label>
+            <select name="hoja" id="hoja" class="form-select form-select-sm" style="width: 280px;"
+                    onchange="this.form.submit()">
+                {% for hoja in hojas %}
+                    <option value="{{ hoja }}" {% if hoja == hoja_seleccionada %}selected{% endif %}>
+                        {{ hoja }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+        <span class="badge bg-secondary badge-etecsa" id="rowCount">
+            {{ filas|length }} registros
+        </span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'exportar_reportes' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i> Exportar Excel
+        </a>
+        <a href="{% url 'accountinfo' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+</div>
 
-        .container:hover {
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-        }
+<!-- Messages -->
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-        h1 {
-            font-size: 1.8em;
-            color: #2c3e50;
-            margin: 0;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e3e4e6;
-        }
-
-        /* Botón para volver a AccountInfo */
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 40px; /* Ancho del botón */
-            height: 40px; /* Alto del botón */
-            background-color: #2c3e50; /* Color de fondo del botón */
-            color: white;
-            border: none;
-            border-radius: 8px; /* Esquinas redondeadas */
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Sombra para el botón */
-        }
-
-        .back-btn:hover {
-            background-color: #3498db; /* Efecto hover en el botón */
-        }
-
-        .form-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-weight: 600;
-            color: #495057;
-            font-size: 1em;
-        }
-
-        select {
-            padding: 8px;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: border-color 0.3s ease;
-        }
-
-        select:hover {
-            border-color: #3498db;
-        }
-
-        .table-container {
-            max-height: 530px;
-            overflow-y: auto;
-            margin-top: 20px;
-            border: 1px solid #e3e4e6;
-            border-radius: 8px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9em;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border: 1px solid #e3e4e6;
-        }
-
-        th {
-            background-color: #365779;
-            color: #fff;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            font-size: 1em;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        td {
-            background-color: #ffffff;
-            color: #34495e;
-        }
-
-        tr:nth-child(even) td {
-            background-color: #f9f9f9;
-        }
-
-        tr:hover td {
-            background-color: #ecf0f1;
-            transition: background-color 0.3s ease;
-        }
-
-        /* Hacer que la tabla sea responsive */
-        @media (max-width: 768px) {
-            th, td {
-                font-size: 0.85em;
-                padding: 10px;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
-
-            select {
-                padding: 8px;
-                font-size: 0.95em;
-            }
-
-            .table-container {
-                max-height: 400px;
-            }
-        }
-
-        /* Mejora del contenedor de tabla para pantallas pequeñas */
-        @media (max-width: 576px) {
-            .table-container {
-                max-height: 300px;
-            }
-
-            th, td {
-                font-size: 0.8em;
-            }
-
-            h1 {
-                font-size: 1.4em;
-            }
-        }
-
-        .back-btn {
-            display: inline-block; /* Para que se comporte como un botón */
-            width: 30px;
-            height: 30px;
-            background-color: rgba(6, 74, 119, 0.815);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            text-decoration: none; /* Sin subrayado */
-        }
-
-        .back-btn:hover {
-            background-color:  #697a77;
-        }
-
-
-    </style>
-</head>
-<body>
-    <a href="{% url 'accountinfo' %}" class="back-btn">←</a>
-    <div class="container">
-        <div class="form-container">
-            <h1>Contenido del Reporte</h1>
-            <form method="GET">
-                <label for="hoja">Seleccionar Hoja:</label>
-                <select name="hoja" id="hoja" onchange="this.form.submit()">
-                    {% for hoja in hojas %}
-                        <option value="{{ hoja }}" {% if hoja == hoja_seleccionada %}selected{% endif %}>{{ hoja }}</option>
-                    {% endfor %}
-                </select>
-            </form>
+<!-- Sheet Info Cards -->
+<div class="row g-3 mb-3">
+    <div class="col-auto">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3"
+             style="background: #f0f5ff; border: 1px solid #d0e0f5;">
+            <i class="bi bi-file-earmark-spreadsheet text-primary"></i>
+            <span class="fw-semibold text-primary">{{ hoja_seleccionada }}</span>
         </div>
-
-        <div class="alert {% if messages %}visible{% endif %}">
-            {% for message in messages %}
-                <p>{{ message }}</p>
-            {% endfor %}
+    </div>
+    <div class="col-auto">
+        <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3"
+             style="background: #f5f5f5;">
+            <i class="bi bi-grid-3x3 text-secondary"></i>
+            <span class="text-secondary">{{ hojas|length }} hojas disponibles</span>
         </div>
-        
-        <div class="table-container">
-            <table class="table">
+    </div>
+</div>
+
+<!-- Report Table -->
+<div class="card content-card">
+    <div class="card-body p-0">
+        <div style="max-height: 60vh; overflow-y: auto; border-radius: 8px;">
+            <table class="table table-modern table-hover mb-0" id="reportTable">
                 <thead>
                     <tr>
+                        <th style="width: 40px;">#</th>
                         {% for col in filas.0.keys %}
                             <th>{{ col }}</th>
                         {% endfor %}
@@ -229,14 +79,30 @@
                 <tbody>
                     {% for fila in filas %}
                     <tr>
+                        <td class="text-muted">{{ forloop.counter }}</td>
                         {% for valor in fila.values %}
-                            <td>{{ valor }}</td>
+                            <td>{{ valor|default:"—" }}</td>
                         {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="20" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Esta hoja no contiene datos
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Update row count on page load
+    const rows = document.querySelectorAll('#reportTable tbody tr');
+    document.getElementById('rowCount').textContent = `${rows.length} registros`;
+</script>
+{% endblock %}

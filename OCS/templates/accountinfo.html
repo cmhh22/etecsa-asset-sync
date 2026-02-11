@@ -1,420 +1,73 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Computadoras</title>
-    <!-- Importa Google Fonts y CSS -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2c3e50;  /* Azul grisáceo oscuro */
-            --secondary-color: #697a77; /* Verde suave */
-            --background-color: #f4f4f4; /* Gris claro */
-            --text-color: #2c3e50; /* Texto en azul grisáceo */
-            --hover-color: rgba(52, 152, 219, 0.2); /* Azul claro traslúcido */
-            --hover-effect: rgba(41, 128, 185, 0.1); /* Efecto hover más sutil */
-        }
+{% extends "base.html" %}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto', sans-serif;
-        }
+{% block title %}Inventario — ETECSA Asset Sync{% endblock %}
+{% block nav_assets %}active{% endblock %}
+{% block page_title %}Inventario de Activos{% endblock %}
 
-        body {
-            display: flex;
-            min-height: 100vh;
-            background-color: var(--background-color);
-            color: var(--text-color);
-        }
+{% block extra_css %}
+<style>
+    .table-scroll {
+        max-height: 65vh;
+        overflow-y: auto;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
 
-        /* Sidebar */
-        .sidebar {
-            width: 200px;
-            background-color: var(--primary-color);
-            padding: 20px;
-            color: white;
-            flex-shrink: 0;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-            transition: width 1s ease;
-        }
-
-        /* Ocultar Sidebar */
-        .sidebar.hidden {
-            width: 0;
-            padding: 0;
-        }
-
-        .sidebar h2 {
-            margin-bottom: 20px;
-            font-size: 20px;
-            text-align: center;
-            color: white;
-            transition: opacity 1s ease;
-        }
-
-        /* Ocultar el contenido del sidebar cuando está colapsado */
-        .sidebar.hidden h2,
-        .sidebar.hidden ul {
-            display: none;
-        }
-
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .sidebar li {
-            margin: 10px 0;
-        }
-
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-            border-radius: 5px;
-            display: block;
-            transition: background-color 1s ease;
-        }
-
-        .sidebar a:hover {
-            background-color: var(--hover-color); /* Efecto de fondo al pasar el ratón */
-        }
-
-        /* Main content */
-        .main-content {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: hidden;
-            display: flex;
-            flex-direction: column;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-left: 20px;
-            transition: margin-left 1s ease;
-        }
-
-        /* Expandir el contenido principal cuando el sidebar está oculto */
-        .main-content.expanded {
-            margin-left: 0;
-        }
-
-        .main-content h1 {
-            margin-bottom: 10px;
-            color: var(--primary-color);
-            font-size: 28px;
-            text-align: center;
-            transition: transform 0.3s ease;
-            font-weight: 600;
-            padding: 10px 0;
-        }
-
-
-        /* Barra de búsqueda */
-        .search-bar {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: flex-start; /* Alinea el botón a la izquierda */
-            align-items: center;
-            position: relative;
-        }
-
-        .search-bar input {
-            padding: 8px;
-            width: 225px;
-            border: 1px solid rgba(6, 74, 119, 0.815);
-            border-radius: 5px;
-            transition: border-color 0.3s ease;
-            font-size: 14px;
-            background-color: #fff;
-        }
-
-        .search-bar input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-
-        .search-bar button {
-            margin-right: 10px;
-            padding: 9px 14px;
-            background-color: rgba(6, 74, 119, 0.815);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .search-bar button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        /* Contenedor scrollable */
-        .table-container {
-            height: 460px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Estilos para la tabla */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: white;
-        }
-
-        th, td {
-            padding: 10px 14px;
-            text-align: left;
-            transition: background-color 0.3s ease;
-            font-size: 14px;
-        }
-
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        tr:hover {
-            background-color: var(--hover-effect); /* Efecto hover sutil */
-        }
-
-        td {
-            border-bottom: 1px solid #ddd;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-
-         /*Boton Actualizar */
-        .update-btn {
-            margin-top: 20px;
-            padding: 8px 12px;
-            background-color: rgba(6, 74, 119, 0.815);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            align-self: flex-start; /* Alinea el botón a la izquierda */
-            transition: background-color 0.3s ease;
-        }
-
-        .update-btn:hover {
-             background-color: var(--secondary-color); /* Efecto hover en el botón */
-        }
-
-        /* Botón de agregar */
-        .add-btn {
-            margin-top: 20px; 
-            padding: 9px 14px;
-            border: none;
-            border-radius: 5px;
-            background-color:rgba(6, 74, 119, 0.815);
-            color: white;
-            cursor: pointer;
-            font-size: 14px;
-            align-self: flex-end;
-            transition: background-color 0.3s ease;
-        }
-
-        .add-btn:hover {
-            background-color:  var(--secondary-color); /* Efecto hover en el botón */
-        }
-
-        /* Botón para mostrar/ocultar el sidebar */
-        .toggle-btn {
-            position: absolute;
-            top: 20px;
-            left: 210px;
-            background-color: rgba(6, 74, 119, 0.815);
-            color: white;
-            padding: 5px 8px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: left 1s ease;
-        }
-        .toggle-btn:hover {
-            background-color:  var(--secondary-color); /* Efecto hover en el botón */
-        }
-
-        .sidebar.hidden + .toggle-btn {
-            left: 10px;
-        }
-
-        /* Responsive design */
-        @media screen and (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-
-            .sidebar {
-                width: 100%;
-                height: auto;
-                flex-direction: row;
-                margin-bottom: 20px;
-            }
-
-            .main-content {
-                padding: 20px;
-                margin-left: 0;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            .table-container {
-                height: 300px;
-            }
-        }
-
-        /* Estilos para el indicador de carga */
-        #loading-indicator {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.8);
-            z-index: 9999; /* Asegura que esté encima de otros elementos */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .loader {
-            border: 8px solid #f3f3f3; /* Color del fondo */
-            border-top: 8px solid var(--primary-color); /* Color del borde superior */
-            border-radius: 50%;
-            width: 40px; /* Tamaño del spinner */
-            height: 40px; /* Tamaño del spinner */
-            animation: spin 1s linear infinite; /* Animación */
-            margin-bottom: 10px; /* Espacio entre el spinner y el mensaje */
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #loading-indicator p {
-            font-size: 16px; /* Tamaño de fuente para el mensaje */
-            color: #333; /* Color del mensaje */
-            margin: 0; /* Eliminar margen del párrafo */
-        }
-
-        .alert {
-            position: relative; /* Necesario para el posicionamiento del botón de cierre */
-            background-color: #d4edda; /* Color de fondo verde claro */
-            color: #155724; /* Color del texto */
-            padding: 15px; /* Espaciado interno */
-            border: 1px solid #c3e6cb; /* Borde de la alerta */
-            border-radius: 4px; /* Esquinas redondeadas */
-            margin-bottom: 15px; /* Margen inferior para separación */
-        }
-
-        .alert.success {
-            background-color: #c3e6cb; /* Color de fondo verde claro */
-            border-color: #c3e6cb; /* Color del borde */
-        }
-
-        .alert p {
-            margin: 10px 0; /* Margen para separación de párrafos */
-        }
-
-        .alert .download-link {
-            color: #007bff; /* Color del enlace */
-            text-decoration: underline; /* Subrayado para el enlace */
-        }
-
-        .alert .download-link:hover {
-            text-decoration: none; /* Sin subrayado al pasar el ratón */
-            color: #0056b3; /* Color del enlace al pasar el ratón */
-        }
-
-        .alert .close {
-            position: absolute; /* Posiciona la cruz en la esquina */
-            top: 10px; /* Ajusta la posición vertical */
-            right: 15px; /* Ajusta la posición horizontal */
-            cursor: pointer; /* Cambia el cursor al pasar sobre el botón de cierre */
-            font-weight: bold; /* Negrita para el botón de cierre */
-            font-size: 1.5em; /* Tamaño del icono de cierre */
-            color: #155724; /* Color de la cruz */
-            transition: color 0.3s; /* Transición suave para el color */
-        }
-        .alert .close:hover {
-            color: #0c743a; /* Color al pasar el cursor sobre la cruz */
-        }
-
-        .logout-button {
-            display: block;
-            padding: 10px 15px;
-            background-color: (--primary-color); /* Color de fondo rojo */
-            color: #fff;
-            text-align: left;
-            border-radius: 5px;
-            text-decoration: none;
-            margin-top: 10px;
-        }
-
-        .logout-button:hover {
-            background-color: #e63939; /* Color más oscuro al pasar el mouse */
-        }
-
-    </style>
-</head>
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <h2>Menú</h2>
-        <ul>
-            <li><a href="#">Resumen </a></li>
-            <li><a href="{% url 'mostrar_reportes' %}">Reportes</a></li>
-            <li><a href="{% url 'exportar_reportes' %}">Exportar Reportes</a></li>
-            <li><a href="#">Historial</a></li>
-            <li><a href="#">Notificaciones</a></li>
-            <a href="{% url 'logout' %}" class="logout-button">Cerrar Sesión</a>
-        </ul>
-    </div>
-
-    <!-- Botón para ocultar/mostrar el sidebar -->
-    <button class="toggle-btn" id="toggle-btn">☰</button>
-
-    <!-- Main Content -->
-    <div class="main-content" id="main-content">
-        <h1 >Registro de Computadoras</h1>
-        <div class="search-bar">
-            <button>Buscar</button>
-            <input type="text" placeholder="Buscar por Noinventario..." id="search-input">
+{% block content %}
+<!-- Action Bar -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="d-flex gap-2 align-items-center">
+        <div class="input-group" style="width: 320px;">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" placeholder="Buscar por inventario, TAG, usuario..."
+                   id="searchInput">
         </div>
-        <div class="table-container">
-            <table>
+        <span class="badge bg-secondary badge-etecsa" id="rowCount">{{ cuentas|length }} registros</span>
+    </div>
+    <div class="d-flex gap-2">
+        <form action="{% url 'actualizar_tags' %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-etecsa" onclick="showLoading()">
+                <i class="bi bi-arrow-repeat me-1"></i> Sincronizar TAGs
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Success Alert -->
+{% if messages %}
+<div class="mb-3">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+        {% if message.tags == 'success' %}
+        <div class="mt-2">
+            <a href="{% url 'descargar_registros' %}" class="btn btn-sm btn-outline-dark">
+                <i class="bi bi-file-text me-1"></i>Descargar Log
+            </a>
+            <a href="{% url 'mostrar_reportes' %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i>Ver Reportes
+            </a>
+        </div>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Asset Table -->
+<div class="card content-card">
+    <div class="card-body p-0">
+        <div class="table-scroll">
+            <table class="table table-modern table-hover mb-0" id="assetTable">
                 <thead>
                     <tr>
-                        <th>HADWARE_ID</th>
+                        <th>HW ID</th>
                         <th>TAG</th>
                         <th>Edificio</th>
-                        <th>Noinventario</th>
+                        <th>No. Inventario</th>
                         <th>Usuario</th>
                         <th>Observaciones</th>
                         <th>fields_3</th>
@@ -431,78 +84,67 @@
                 <tbody>
                     {% for cuenta in cuentas %}
                     <tr>
-                        <td>{{ cuenta.hardware_id }}</td>
-                        <td>{{ cuenta.tag }}</td>
-                        <td>{{ cuenta.edificio }}</td>
-                        <td>{{ cuenta.noinventario }}</td>
-                        <td>{{ cuenta.usuario }}</td>
-                        <td>{{ cuenta.observaciones }}</td>
-                        <td>{{ cuenta.fields_3 }}</td>
-                        <td>{{ cuenta.fields_4 }}</td>
-                        <td>{{ cuenta.fields_5 }}</td>
-                        <td>{{ cuenta.fields_6 }}</td>
-                        <td>{{ cuenta.fields_7 }}</td>
-                        <td>{{ cuenta.fields_8 }}</td>
-                        <td>{{ cuenta.fields_9 }}</td>
-                        <td>{{ cuenta.fields_10 }}</td>
-                        <td>{{ cuenta.fields_11 }}</td>
+                        <td><code>{{ cuenta.hardware_id }}</code></td>
+                        <td>
+                            {% if cuenta.tag %}
+                                <span class="badge bg-success badge-etecsa">{{ cuenta.tag }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cuenta.edificio|default:"—" }}</td>
+                        <td>{{ cuenta.noinventario|default:"—" }}</td>
+                        <td>{{ cuenta.usuario|default:"—" }}</td>
+                        <td>{{ cuenta.observaciones|default:"—"|truncatechars:40 }}</td>
+                        <td>
+                            {% if cuenta.fields_3 == "MV" %}
+                                <span class="badge bg-info badge-etecsa">MV</span>
+                            {% else %}
+                                {{ cuenta.fields_3|default:"—" }}
+                            {% endif %}
+                        </td>
+                        <td>{{ cuenta.fields_4|default:"—" }}</td>
+                        <td>{{ cuenta.fields_5|default:"—" }}</td>
+                        <td>{{ cuenta.fields_6|default:"—" }}</td>
+                        <td>{{ cuenta.fields_7|default:"—" }}</td>
+                        <td>{{ cuenta.fields_8|default:"—" }}</td>
+                        <td>{{ cuenta.fields_9|default:"—" }}</td>
+                        <td>{{ cuenta.fields_10|default:"—" }}</td>
+                        <td>{{ cuenta.fields_11|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="15" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No hay registros en la base de datos
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="button-container">
-            <form action="{% url 'actualizar_tags' %}" method="post" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="update-btn" id="update-tags-button">Actualizar TAGs</button>
-            </form>
-            <button class="add-btn">Agregar Registro</button> <!-- Botón Agregar Registro -->
-        </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        const toggleBtn = document.getElementById('toggle-btn');
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
+{% block extra_js %}
+<script>
+    // Client-side search filter
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('assetTable');
+    const rowCount = document.getElementById('rowCount');
+    const rows = table.querySelectorAll('tbody tr');
 
-        toggleBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('hidden');
-            mainContent.classList.toggle('expanded');
-
-            // Cambiar el texto del botón dependiendo del estado
-            if (sidebar.classList.contains('hidden')) {
-                toggleBtn.textContent = '☰';
-            } else {
-                toggleBtn.textContent = '☰';
-            }
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const match = text.includes(query);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
         });
-    </script>
-
-    <div id="loading-indicator" style="display: none;">
-        <div class="loader"></div>
-        <p>... Espere un momento ...</p>
-    </div>
-    
-    {% if messages %}
-    <div class="alert alert-success">
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-        <p>Reportes disponibles.</p>
-        <p>
-            Archivo <strong>Registros.txt</strong> disponible para su descarga: 
-            <a href="{% url 'descargar_registros' %}" class="download-link">Descargar</a>
-        </p>
-        <span class="close" onclick="this.parentElement.style.display='none';">&times;</span>
-    </div>
-    {% endif %}
-
-    <script>
-        document.getElementById('update-tags-button').addEventListener('click', function() {
-            // Muestra el indicador de carga
-            document.getElementById('loading-indicator').style.display = 'flex';
-        });
-    </script>
-    
-</body>
-</html>
+        rowCount.textContent = `${visible} registros`;
+    });
+</script>
+{% endblock %}

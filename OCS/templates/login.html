@@ -3,197 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <title>Iniciar Sesión — ETECSA Asset Sync</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            font-family: 'Open Sans', sans-serif;
-            background: linear-gradient(135deg, #001f3f, #00557f); /* Fondo degradado en tonos azules */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-
-        .login-container {
-            background-color: rgba(255, 255, 255, 0.9); /* Fondo blanco con transparencia */
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 350px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: 1px solid #ccc; /* Borde sutil */
-        }
-
-        .login-container:hover {
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .login-form h2 {
-            color: #002d4f;
-            font-family: 'Quicksand', sans-serif;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .input-group {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0c4a6e 100%);
             position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle animated background dots */
+        body::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.06) 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 420px;
+            padding: 48px 40px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp .5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-area .icon-circle {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #1e3a5f, #0c4a6e);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .logo-area .icon-circle i {
+            font-size: 28px;
+            color: #fff;
+        }
+
+        .logo-area h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
+        }
+
+        .logo-area p {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .form-group {
             margin-bottom: 20px;
         }
 
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ccc; /* Borde más sutil */
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-family: 'Open Sans', sans-serif;
-            transition: border 0.3s ease, box-shadow 0.3s ease;
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
         }
 
-        .input-group input:focus {
-            border-color: #007bff; /* Color de borde al enfocar */
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-            outline: none;
+        .input-wrapper {
+            position: relative;
         }
 
-        .input-group span {
+        .input-wrapper i {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
             font-size: 16px;
-            display: none;
-            transition: opacity 0.3s ease;
         }
 
-        .input-group .i-warning {
-            color: #f1c40f;
-        }
-
-        .input-group .i-save {
-            color: #2ecc71;
-        }
-
-        .input-group .i-close {
-            color: #e74c3c;
-        }
-
-        button {
+        .input-wrapper input {
             width: 100%;
-            padding: 12px;
-            background-color: #002d4f;
-            color: #ffffff;
+            padding: 12px 14px 12px 42px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            transition: all .2s;
+            color: #1e293b;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .15);
+            background: #fff;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, #1e3a5f, #0c4a6e);
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease, transform 0.3s ease;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        button:hover {
-            background-color: #004080;
-            transform: translateY(-2px);
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(14, 74, 110, .4);
         }
 
-        .form-options {
-            margin-top: 20px;
+        .btn-login:active { transform: translateY(0); }
+
+        .form-footer {
+            margin-top: 24px;
             text-align: center;
-        }
-
-        .form-options a {
-            color: #555;
-            text-decoration: none;
-            margin: 0 10px;
             font-size: 14px;
-            transition: color 0.3s ease;
+            color: #64748b;
         }
 
-        .form-options a:hover {
-            color: #002d4f;
+        .form-footer a {
+            color: #1e3a5f;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color .2s;
         }
 
-        .box-info {
-            margin-top: 10px;
-            text-align: center;
-            color: #002d4f;
-            font-family: 'Quicksand', sans-serif;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .form-footer a:hover {
+            color: #0c4a6e;
+            text-decoration: underline;
         }
 
-        .box-info.visible {
-            opacity: 1;
+        @media (max-width: 480px) {
+            .login-card { margin: 16px; padding: 32px 24px; }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-card">
+        <div class="logo-area">
+            <div class="icon-circle">
+                <i class="bi bi-hdd-network"></i>
+            </div>
+            <h1>ETECSA Asset Sync</h1>
+            <p>Sistema de Gestión de Activos IT</p>
+        </div>
+
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="bi bi-exclamation-circle me-1"></i> {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
-        <form id="login_form" class="login-form" method="POST" action="{% url 'login' %}">
+
+        <form method="POST" action="{% url 'login' %}">
             {% csrf_token %}
-            <h2>Iniciar Sesión</h2>
-            <div class="input-group">
-                <input type="text" name="username" placeholder="Usuario" required>
-                <span class="i-warning">!</span>
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person"></i>
+                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required autofocus>
+                </div>
             </div>
-            <div class="input-group">
-                <input type="password" name="password" placeholder="Contraseña" required>
-                <span class="i-warning">!</span>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                </div>
             </div>
-            <button type="submit">Ingresar</button> <!-- Cambiado a submit -->
-            <div class="form-options">
-                <a href="#">¿Olvidaste tu contraseña?</a>
-                <a href="{% url 'register' %}">Crear cuenta</a>
-            </div>
-        </form>        
-        <div class="box-info" id="loginInfo">
-            ¡Bienvenido de nuevo!
+            <button type="submit" class="btn-login">
+                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="form-footer">
+            ¿No tienes cuenta? <a href="{% url 'register' %}">Crear una cuenta</a>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Animación al hacer clic en login
-            $("#do_login").click(function() { 
-                $(".input-group span").hide();
-                $(".input-group input").removeClass("i-warning");
-
-                var proceed = true;
-                $("#login_form input").each(function(){
-                    if(!$.trim($(this).val())){
-                        $(this).next('span').show().addClass("i-warning");
-                        proceed = false;
-                    }
-                });
-
-                if(proceed) {
-                    $("#loginInfo").text("¡Ingreso exitoso!").css("color", "#2ecc71").addClass("visible");
-                } else {
-                    $("#loginInfo").text("Por favor completa todos los campos.").css("color", "#e74c3c").addClass("visible");
-                }
-
-                setTimeout(function(){
-                    $("#loginInfo").removeClass("visible");
-                }, 2000);
-            });
-
-            // Ocultar las advertencias cuando se empieza a escribir
-            $("#login_form input").keyup(function() { 
-                $(this).next('span').hide();
-            });
-
-            // Efecto de entrada suave al cargar la página
-            $('.login-container').css('transform', 'scale(1)').css('box-shadow', '0 15px 40px rgba(0, 0, 0, 0.2)');
-        });
-    </script>
 </body>
 </html>

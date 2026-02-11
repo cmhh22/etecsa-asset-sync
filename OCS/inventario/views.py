@@ -1,128 +1,217 @@
+"""
+views.py — Django views for ETECSA Asset Sync.
+
+Provides views for the asset dashboard, TAG synchronization,
+report viewing, authentication, and data export.
+"""
+
 import os
-import subprocess
-from turtle import pd
-from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render,redirect
+import logging
+
+import pandas as pd
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
+from django.core.management import call_command
+from django.db.models import Q
+from django.http import FileResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
+
 from .models import AccountInfo
-from django.contrib import messages  # Importa el sistema de mensajes
-import pandas as pd  # Asegúrate de que esta línea esté aquí
-import openpyxl
-from django.contrib.auth.views import LoginView
-from .forms import LoginForm
-from .forms import RegistroForm
-from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
-from django.contrib.auth import logout
+from .forms import LoginForm, RegistroForm
 
-#@login_required
-def mostrar_accountinfo(request):
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
+@login_required
+def dashboard(request):
+    """Main dashboard with summary statistics and charts."""
     cuentas = AccountInfo.objects.all()
-    return render(request, 'accountinfo.html', {'cuentas': cuentas})
+    total = cuentas.count()
 
+    with_tag = cuentas.exclude(tag__isnull=True).exclude(tag="").count()
+    without_tag = total - with_tag
+    virtual_machines = cuentas.filter(fields_3="MV").count()
+    empty_inventory = cuentas.filter(
+        Q(fields_3__isnull=True) | Q(fields_3="")
+    ).count()
+
+    # Assets by building (from TAG field: "Edificio-Local")
+    buildings = {}
+    for cuenta in cuentas.exclude(tag__isnull=True).exclude(tag=""):
+        building = cuenta.tag.split("-")[0] if "-" in cuenta.tag else cuenta.tag
+        buildings[building] = buildings.get(building, 0) + 1
+
+    buildings_sorted = dict(
+        sorted(buildings.items(), key=lambda x: x[1], reverse=True)[:10]
+    )
+
+    context = {
+        "total_assets": total,
+        "with_tag": with_tag,
+        "without_tag": without_tag,
+        "virtual_machines": virtual_machines,
+        "empty_inventory": empty_inventory,
+        "tag_percentage": round((with_tag / total * 100) if total else 0, 1),
+        "building_labels": list(buildings_sorted.keys()),
+        "building_counts": list(buildings_sorted.values()),
+        "recent_assets": cuentas.order_by("-hardware_id")[:5],
+    }
+    return render(request, "dashboard.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Asset Table
+# ---------------------------------------------------------------------------
+@login_required
+def mostrar_accountinfo(request):
+    """Display the full asset inventory table."""
+    cuentas = AccountInfo.objects.all()
+    return render(request, "accountinfo.html", {"cuentas": cuentas})
+
+
+# ---------------------------------------------------------------------------
+# Sync Tags
+# ---------------------------------------------------------------------------
 @csrf_exempt
+@login_required
 def actualizar_tags(request):
-    if request.method == 'POST':
-        # Ejecuta tu script, asumiendo que está al mismo nivel que manage.py
-        subprocess.call(['python', 'script_actualizar_TAG.py'])  # Cambia 'tu_script.py' por el nombre correcto
+    """Execute TAG synchronization via the management command."""
+    if request.method == "POST":
+        try:
+            call_command("sync_tags")
+            messages.success(request, "TAGs actualizados con éxito.")
+        except Exception as e:
+            logger.error(f"Error en sincronización: {e}")
+            messages.error(request, f"Error al actualizar TAGs: {e}")
+        return HttpResponseRedirect(reverse("accountinfo"))
+    return redirect("accountinfo")
 
-        # Agrega un mensaje de éxito
-        messages.success(request, 'TAGs actualizados con éxito.')
-        
-        # Redirigir después de ejecutar el script a la misma página con la tabla
-        return HttpResponseRedirect(reverse('accountinfo'))
 
+# ---------------------------------------------------------------------------
+# Reports
+# ---------------------------------------------------------------------------
+@login_required
 def mostrar_reportes(request):
-    # Ruta al archivo de Excel
-    excel_path = os.path.join(settings.BASE_DIR, 'Reportes.xlsx')
+    """View generated Excel reports with sheet selector."""
+    excel_path = os.path.join(settings.BASE_DIR, "Reportes.xlsx")
 
     try:
-        # Intentar leer el archivo Excel
         hojas = pd.ExcelFile(excel_path).sheet_names
-        hoja_seleccionada = request.GET.get('hoja', hojas[0])  # Seleccionar la primera hoja por defecto
-        filas = pd.read_excel(excel_path, sheet_name=hoja_seleccionada).to_dict(orient='records')
-        return render(request, 'reportes.html', {'filas': filas, 'hojas': hojas, 'hoja_seleccionada': hoja_seleccionada})
-    
+        hoja_seleccionada = request.GET.get("hoja", hojas[0])
+        df = pd.read_excel(excel_path, sheet_name=hoja_seleccionada)
+        filas = df.to_dict(orient="records")
+
+        sheet_counts = {}
+        for hoja in hojas:
+            sheet_counts[hoja] = len(pd.read_excel(excel_path, sheet_name=hoja))
+
+        return render(request, "reportes.html", {
+            "filas": filas,
+            "hojas": hojas,
+            "hoja_seleccionada": hoja_seleccionada,
+            "sheet_counts": sheet_counts,
+            "total_filas": len(filas),
+        })
     except FileNotFoundError:
-        # En caso de que el archivo no exista, mostrar una página de advertencia
-        return render(request, 'no_reportes.html')
-
+        return render(request, "no_reportes.html")
     except Exception as e:
-        # Otras excepciones se pueden manejar aquí (opcional)
-        return render(request, 'error.html', {'error': str(e)})
+        logger.error(f"Error leyendo reportes: {e}")
+        return render(request, "no_reportes.html")
 
+
+@login_required
 def descargar_registros(request):
-    filepath = os.path.join(os.path.dirname(__file__), '..', 'Registros.txt')
-    return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='Registros.txt')
+    """Download the sync log file."""
+    filepath = os.path.join(settings.BASE_DIR, "Registros.txt")
+    if os.path.exists(filepath):
+        return FileResponse(
+            open(filepath, "rb"), as_attachment=True, filename="Registros.txt"
+        )
+    messages.warning(request, "No hay registros disponibles.")
+    return redirect("accountinfo")
 
+
+@login_required
 def exportar_reportes(request):
-    # Ruta completa al archivo de Excel
-    excel_path = os.path.join(settings.BASE_DIR, 'Reportes.xlsx')
-
-    # Verificar si el archivo existe
+    """Download the generated Excel report."""
+    excel_path = os.path.join(settings.BASE_DIR, "Reportes.xlsx")
     if os.path.exists(excel_path):
-        # Si el archivo existe, se descarga
-        response = FileResponse(open(excel_path, 'rb'), as_attachment=True, filename='Reportes.xlsx')
-        return response
-    else:
-        # Si el archivo no existe, mostrar un mensaje de advertencia
-        return render(request, 'no_reportes.html', {'mensaje': 'Aún no hay reportes generados.'})
-    
-class CustomLoginView(LoginView):
-    template_name = 'login.html'  # Asegúrate de que este sea el nombre correcto de tu template
-    
-    def post(self, request, *args, **kwargs):
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        return FileResponse(
+            open(excel_path, "rb"), as_attachment=True, filename="Reportes.xlsx"
+        )
+    return render(request, "no_reportes.html", {"mensaje": "Aún no hay reportes generados."})
 
+
+# ---------------------------------------------------------------------------
+# API endpoint for dashboard charts (AJAX)
+# ---------------------------------------------------------------------------
+@login_required
+def api_dashboard_stats(request):
+    """Return dashboard statistics as JSON for dynamic charts."""
+    cuentas = AccountInfo.objects.all()
+    total = cuentas.count()
+    with_tag = cuentas.exclude(tag__isnull=True).exclude(tag="").count()
+
+    buildings = {}
+    for c in cuentas.exclude(tag__isnull=True).exclude(tag=""):
+        b = c.tag.split("-")[0] if "-" in c.tag else c.tag
+        buildings[b] = buildings.get(b, 0) + 1
+
+    return JsonResponse({
+        "total": total,
+        "with_tag": with_tag,
+        "without_tag": total - with_tag,
+        "virtual_machines": cuentas.filter(fields_3="MV").count(),
+        "empty_inventory": cuentas.filter(Q(fields_3__isnull=True) | Q(fields_3="")).count(),
+        "buildings": buildings,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Authentication
+# ---------------------------------------------------------------------------
+class CustomLoginView(LoginView):
+    template_name = "login.html"
+
+    def post(self, request, *args, **kwargs):
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('accountinfo')  # Redirige a la página de accountinfo
+            return redirect("dashboard")
         else:
             messages.error(request, "Nombre de usuario o contraseña incorrectos.")
-            return self.get(request, *args, **kwargs)  # Muestra el formulario nuevamente con el mensaje de error
+            return self.get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         return render(request, self.template_name)
 
-    
+
 def register(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
+    """User registration view."""
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
         try:
-            # Crear un nuevo usuario
             user = User.objects.create_user(username=username, password=password)
-            user.save()
-            login(request, user)  # Iniciar sesión automáticamente después de registrarse
-            return redirect('accountinfo')  # Cambia a la URL correspondiente
-
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-
-    return render(request, 'register.html')
-
-def login_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
             login(request, user)
-            return redirect('accountinfo')  # Redirigir a la página de cuenta
-        else:
-            return JsonResponse({'success': False, 'error': 'Credenciales inválidas'})
+            return redirect("dashboard")
+        except Exception as e:
+            messages.error(request, f"Error al registrar: {e}")
+    return render(request, "register.html")
 
-    return render(request, 'login.html')
 
 def logout_view(request):
+    """Log out and redirect to login."""
     logout(request)
-    return redirect('login')  # Redirige a la página de inicio de sesión después de cerrar sesión
+    return redirect("login")
