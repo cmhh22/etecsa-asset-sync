@@ -102,8 +102,7 @@ etecsa-asset-sync/
 ├── build.sh                     # Build script for PaaS platforms
 ├── docs/
 │   ├── ARCHITECTURE.md          # System design & database schema
-│   ├── PYTHONANYWHERE_DEPLOY.md # Free deployment guide
-│   └── TECHNOLOGIES.md          # Educational tech reference
+│   └── PYTHONANYWHERE_DEPLOY.md # Free deployment guide
 └── OCS/
     ├── script_actualizar_TAG.py # ⚡ Original production script
     ├── manage.py
@@ -177,8 +176,6 @@ Built-in intelligence without external APIs:
 | **Production** | Gunicorn, WhiteNoise, Docker, HSTS |
 | **Deployment** | PythonAnywhere (free), Render, Docker |
 
-📖 **[Full technology guide](docs/TECHNOLOGIES.md)** — Educational reference for each technology
-
 ---
 
 ## Documentation
@@ -186,7 +183,6 @@ Built-in intelligence without external APIs:
 | Document | Description |
 |----------|-------------|
 | **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | System design, services layer, database schema, security |
-| **[TECHNOLOGIES.md](docs/TECHNOLOGIES.md)** | Educational guide to all technologies used |
 | **[PYTHONANYWHERE_DEPLOY.md](docs/PYTHONANYWHERE_DEPLOY.md)** | 🆓 FREE deployment guide (no credit card) |
 
 ---
