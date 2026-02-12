@@ -128,7 +128,7 @@ class AssetAnalyticsEngine:
 
         if not assets:
             logger.warning("No assets found for analysis.")
-            self.result.summary = {"total": 0, "message": "Sin datos"}
+            self.result.summary = {"total": 0, "message": "No data"}
             return self.result
 
         df = pd.DataFrame(assets)
@@ -172,16 +172,16 @@ class AssetAnalyticsEngine:
                 Anomaly(
                     severity="critical",
                     category="duplicate",
-                    title="Números de inventario duplicados",
+                    title="Duplicate inventory numbers",
                     description=(
-                        f"Se detectaron {len(dupe_counts)} números de inventario "
-                        f"asignados a múltiples equipos ({sum(dupe_counts.values())} "
-                        f"registros afectados)."
+                        f"{len(dupe_counts)} inventory numbers found "
+                        f"assigned to multiple devices ({sum(dupe_counts.values())} "
+                        f"records affected)."
                     ),
                     affected_assets=affected[:20],
                     suggestion=(
-                        "Verifique en el reporte AR01 los equipos con inventario "
-                        "duplicado y corrija la asignación en la base de datos."
+                        "Check the AR01 report for devices with duplicate inventory "
+                        "numbers and correct the assignment in the database."
                     ),
                 )
             )
@@ -198,15 +198,15 @@ class AssetAnalyticsEngine:
                 Anomaly(
                     severity=severity,
                     category="missing_tag",
-                    title="Activos sin TAG asignado",
+                    title="Assets without TAG assignment",
                     description=(
-                        f"{len(no_tag)} activos ({pct:.1f}%) no tienen TAG. "
-                        f"Esto indica equipos no procesados por la sincronización."
+                        f"{len(no_tag)} assets ({pct:.1f}%) have no TAG. "
+                        f"This indicates devices not processed by synchronization."
                     ),
                     affected_assets=no_tag["hardware_id"].tolist()[:15],
                     suggestion=(
-                        "Ejecute la sincronización de TAGs para resolver. "
-                        "Si persisten, verifique que los inventarios aparezcan en AR01."
+                        "Run TAG synchronization to resolve. "
+                        "If they persist, verify that inventories appear in AR01."
                     ),
                 )
             )
@@ -224,15 +224,15 @@ class AssetAnalyticsEngine:
                 Anomaly(
                     severity="warning",
                     category="orphan",
-                    title="Activos huérfanos",
+                    title="Orphan assets",
                     description=(
-                        f"{len(orphans)} activos sin edificio, usuario ni TAG. "
-                        f"Posiblemente equipos desconectados o mal configurados."
+                        f"{len(orphans)} assets without building, user, or TAG. "
+                        f"Possibly disconnected or misconfigured devices."
                     ),
                     affected_assets=orphans["hardware_id"].tolist()[:15],
                     suggestion=(
-                        "Revise estos equipos en OCS Inventory. Pueden ser "
-                        "estaciones temporales, VMs mal configuradas o equipos retirados."
+                        "Review these devices in OCS Inventory. They may be "
+                        "temporary workstations, misconfigured VMs, or retired equipment."
                     ),
                 )
             )
@@ -254,15 +254,15 @@ class AssetAnalyticsEngine:
                 Anomaly(
                     severity="info",
                     category="pattern",
-                    title="TAGs con formato no estándar",
+                    title="Non-standard TAG format",
                     description=(
-                        f"{len(invalid_tags)} TAGs ({pct:.1f}%) no siguen el "
-                        f"patrón Edificio-Local esperado. Ejemplos: {tag_samples}"
+                        f"{len(invalid_tags)} TAGs ({pct:.1f}%) do not follow the "
+                        f"expected Building-Office pattern. Examples: {tag_samples}"
                     ),
                     affected_assets=invalid_tags["hardware_id"].tolist()[:10],
                     suggestion=(
-                        "Los TAGs deben seguir el formato 'EDIF-NNNN'. "
-                        "Verifique el clasificador de locales."
+                        "TAGs should follow the 'BLDG-NNNN' format. "
+                        "Verify the locations classifier."
                     ),
                 )
             )
@@ -294,23 +294,23 @@ class AssetAnalyticsEngine:
         for building, count in counts.items():
             z_score = (count - mean) / std
             if abs(z_score) > 2.0:
-                direction = "concentración alta" if z_score > 0 else "muy pocos activos"
-                outliers.append(f"{building}: {count} equipos ({direction})")
+                direction = "high concentration" if z_score > 0 else "very few assets"
+                outliers.append(f"{building}: {count} assets ({direction})")
 
         if outliers:
             self.result.anomalies.append(
                 Anomaly(
                     severity="info",
                     category="pattern",
-                    title="Distribución atípica por edificio",
+                    title="Unusual distribution by building",
                     description=(
-                        f"Se detectaron {len(outliers)} edificios con cantidades "
-                        f"de activos estadísticamente inusuales (|z| > 2.0)."
+                        f"{len(outliers)} buildings detected with statistically "
+                        f"unusual asset counts (|z| > 2.0)."
                     ),
                     affected_assets=outliers,
                     suggestion=(
-                        "Puede indicar una concentración por migración reciente "
-                        "o equipos pendientes de redistribución."
+                        "May indicate concentration from recent migration "
+                        "or assets pending redistribution."
                     ),
                 )
             )
@@ -338,7 +338,7 @@ class AssetAnalyticsEngine:
         )
         completeness = (filled / (total * len(key_fields) * 2)) * 100
         if completeness < 70:
-            issues.append(f"Completitud baja: {completeness:.0f}% de campos clave rellenos")
+            issues.append(f"Low completeness: {completeness:.0f}% of key fields filled")
 
         # Consistency: % of TAGs following the expected pattern
         tagged = df[df["tag"].notna() & (df["tag"].str.strip() != "")]
@@ -350,7 +350,7 @@ class AssetAnalyticsEngine:
         else:
             consistency = 0.0
         if consistency < 80:
-            issues.append(f"Consistencia de formato TAG: {consistency:.0f}%")
+            issues.append(f"TAG format consistency: {consistency:.0f}%")
 
         # Uniqueness: % of unique inventory numbers (excluding MV and empty)
         inv = df["fields_3"].dropna()
@@ -360,7 +360,7 @@ class AssetAnalyticsEngine:
         else:
             uniqueness = 100.0
         if uniqueness < 95:
-            issues.append(f"Unicidad de inventarios: {uniqueness:.0f}%")
+            issues.append(f"Inventory uniqueness: {uniqueness:.0f}%")
 
         # Validity: % of assets that have either TAG or are classified as MV
         classified = (
@@ -368,7 +368,7 @@ class AssetAnalyticsEngine:
         ) | (df["fields_3"] == "MV")
         validity = (classified.sum() / total) * 100
         if validity < 80:
-            issues.append(f"Validez (activos clasificados): {validity:.0f}%")
+            issues.append(f"Validity (classified assets): {validity:.0f}%")
 
         # Composite score (weighted average)
         score = (
@@ -401,9 +401,9 @@ class AssetAnalyticsEngine:
         is_empty = df["fields_3"].isna() | (df["fields_3"].str.strip() == "")
 
         self.result.distribution["tag_status"] = {
-            "Con TAG": int(with_tag.sum()),
-            "Sin TAG": int((~with_tag & ~is_mv).sum()),
-            "Máquinas Virtuales": int(is_mv.sum()),
+            "With TAG": int(with_tag.sum()),
+            "Without TAG": int((~with_tag & ~is_mv).sum()),
+            "Virtual Machines": int(is_mv.sum()),
         }
 
         # Building distribution (top 10)
@@ -433,11 +433,11 @@ class AssetAnalyticsEngine:
 
         # Asset category breakdown
         self.result.distribution["categories"] = {
-            "Físicos con inventario": int(
+            "Physical with inventory": int(
                 (~is_mv & ~is_empty & df["fields_3"].notna()).sum()
             ),
-            "Máquinas Virtuales": int(is_mv.sum()),
-            "Sin número de inventario": int(is_empty.sum()),
+            "Virtual Machines": int(is_mv.sum()),
+            "No inventory number": int(is_empty.sum()),
         }
 
         # Entropy of building distribution (measure of balance)
@@ -484,9 +484,9 @@ class AssetAnalyticsEngine:
                 "target_pct": 95.0,
                 "assets_needed": target_95,
                 "message": (
-                    f"Faltan {target_95} activos para alcanzar 95% de cobertura TAG."
+                    f"{target_95} assets needed to reach 95% TAG coverage."
                     if target_95 > 0
-                    else "Ya se supera el 95% de cobertura."
+                    else "Already exceeding 95% coverage."
                 ),
             }
 
@@ -494,9 +494,9 @@ class AssetAnalyticsEngine:
         recommendations = []
         if without_tag > 0:
             recommendations.append({
-                "priority": "alta",
-                "action": "Ejecutar sincronización de TAGs",
-                "impact": f"Podría resolver ~{estimated_resolved} activos pendientes",
+                "priority": "high",
+                "action": "Run TAG synchronization",
+                "impact": f"Could resolve ~{estimated_resolved} pending assets",
                 "icon": "bi-arrow-repeat",
             })
 
@@ -505,9 +505,9 @@ class AssetAnalyticsEngine:
         ]
         if dupe_anomalies:
             recommendations.append({
-                "priority": "alta",
-                "action": "Resolver inventarios duplicados",
-                "impact": "Elimina conflictos de asignación de TAG",
+                "priority": "high",
+                "action": "Resolve duplicate inventories",
+                "impact": "Eliminates TAG assignment conflicts",
                 "icon": "bi-exclamation-triangle",
             })
 
@@ -516,26 +516,26 @@ class AssetAnalyticsEngine:
         ]
         if orphan_anomalies:
             recommendations.append({
-                "priority": "media",
-                "action": "Auditar activos huérfanos",
-                "impact": "Limpia registros no válidos de la base de datos",
+                "priority": "medium",
+                "action": "Audit orphan assets",
+                "impact": "Cleans invalid records from the database",
                 "icon": "bi-search",
             })
 
         if self.result.data_quality and self.result.data_quality.completeness < 70:
             recommendations.append({
-                "priority": "media",
-                "action": "Mejorar completitud de datos",
-                "impact": "Información más confiable para reportes y auditorías",
+                "priority": "medium",
+                "action": "Improve data completeness",
+                "impact": "More reliable information for reports and audits",
                 "icon": "bi-clipboard-data",
             })
 
         balance = self.result.distribution.get("building_balance", 100)
         if balance < 50:
             recommendations.append({
-                "priority": "baja",
-                "action": "Revisar distribución de activos por edificio",
-                "impact": "Distribución más equilibrada de recursos IT",
+                "priority": "low",
+                "action": "Review asset distribution by building",
+                "impact": "More balanced IT resource distribution",
                 "icon": "bi-building",
             })
 

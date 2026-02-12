@@ -32,8 +32,9 @@ staticfiles/
 media/
 
 # Excel data files (real company data - DO NOT commit)
-OCS/*.xlsx
-OCS/*.xls
+OCS/AR01*.xlsx
+OCS/CLASIFICADOR*.xlsx
+OCS/Reportes.xlsx
 
 # Logs
 OCS/Registros.txt
@@ -52,3 +53,8 @@ build/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+
+# Byte-compiled / optimized
+*.pyc
+*.pyo

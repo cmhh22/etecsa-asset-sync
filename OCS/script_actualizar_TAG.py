@@ -9,16 +9,17 @@ from openpyxl import load_workbook
 # ---------------------------------------------------------------------------
 # Configuration from .env
 # ---------------------------------------------------------------------------
-bd_nombre = config('DB_NAME', default='ocsweb')
-usuario = config('DB_USER', default='root')
-contrasena = config('DB_PASSWORD', default='')
-host = config('DB_HOST', default='localhost')
-puerto = config('DB_PORT', default=3306, cast=int)
+db_name = config('DB_NAME', default='ocsweb')
+db_user = config('DB_USER', default='root')
+db_password = config('DB_PASSWORD', default='')
+db_host = config('DB_HOST', default='localhost')
+db_port_str = config('DB_PORT', default='3306')
+db_port = int(db_port_str) if db_port_str else 3306
 
-nombre_tabla = config('TABLA_ACCOUNTINFO', default='accountinfo')
-nombre_columna = config('COLUMNA_INVENTARIO', default='fields_3')
+table_name = config('TABLA_ACCOUNTINFO', default='accountinfo')
+inventory_column = config('COLUMNA_INVENTARIO', default='fields_3')
 
-archivo_registro = config('ARCHIVO_REGISTRO', default='Registros.txt')
+log_file = config('ARCHIVO_REGISTRO', default='Registros.txt')
 
 # ---------------------------------------------------------------------------
 # Logging setup
@@ -27,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler(archivo_registro, mode='w', encoding='utf-8'),
+        logging.FileHandler(log_file, mode='w', encoding='utf-8'),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -36,245 +37,245 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Load Excel data sources
 # ---------------------------------------------------------------------------
-archivo_economia = config('EXCEL_ECONOMIA', default='AR01-1.xlsx')
-skip_filas_economia = 8
-columnas_economia = [5, 8]  # Columna 6 (No_inventario), columna 9 (Local)
-df_economia = pd.read_excel(archivo_economia, skiprows=skip_filas_economia, usecols=columnas_economia)
+finance_file = config('EXCEL_ECONOMIA', default='AR01-1.xlsx')
+skip_rows_finance = 8
+finance_columns = [5, 8]  # Column 6 (Inventory No.), Column 9 (Location)
+df_finance = pd.read_excel(finance_file, skiprows=skip_rows_finance, usecols=finance_columns)
 
-archivo_clasificador = config('EXCEL_CLASIFICADOR', default='CLASIFICADOR DE LOCALES -KARINA-1.xlsx')
-columnas_clasificador = [4, 5, 6]  # Columna 5 (ID_LOCAL), columna 6 (DESCRIP_LOCAL), columna 7 (EDIFICIO)
-df_clasificador_locales = pd.read_excel(archivo_clasificador, usecols=columnas_clasificador)
+classifier_file = config('EXCEL_CLASIFICADOR', default='CLASIFICADOR DE LOCALES -KARINA-1.xlsx')
+classifier_columns = [4, 5, 6]  # Column 5 (LOCATION_ID), Column 6 (LOCATION_DESC), Column 7 (BUILDING)
+df_location_classifier = pd.read_excel(classifier_file, usecols=classifier_columns)
 
-# Función optimizada para buscar el número de inventario y devolver el valor del local
-def buscar_inventario_y_local(numero_inventario):
-    numero_inventario = numero_inventario.strip()  # Limpiar el número de inventario
+# Optimized function to look up inventory number and return the location value
+def find_inventory_location(inventory_number):
+    inventory_number = inventory_number.strip()  # Clean the inventory number
 
-    # Limpiar espacios en blanco de la columna de Noinventarios 
-    inventario_economia_limpio = df_economia.iloc[:, 0].astype(str).str.strip()
+    # Clean whitespace from the inventory number column
+    clean_inventory_col = df_finance.iloc[:, 0].astype(str).str.strip()
 
-    # Comprobar si el número de inventario está en la columna limpia
-    if numero_inventario in inventario_economia_limpio.values:
-        # Obtener el índice de la fila que coincide
-        indice_fila = inventario_economia_limpio[inventario_economia_limpio == numero_inventario].index[0]
-        local = df_economia.iloc[indice_fila, 1]  # Obtener el valor de la columna de local
-        return local.strip() if isinstance(local, str) else local  # Limpiar si es cadena
+    # Check if the inventory number exists in the cleaned column
+    if inventory_number in clean_inventory_col.values:
+        # Get the index of the matching row
+        row_index = clean_inventory_col[clean_inventory_col == inventory_number].index[0]
+        location = df_finance.iloc[row_index, 1]  # Get the location column value
+        return location.strip() if isinstance(location, str) else location  # Clean if string
     return None
 
 
-# Función para buscar el local en el clasificador y devolver valores de columnas 6(DESCRIP_LOCAL) y 7(EDIFICIO)
-def buscar_valores_en_clasificador(local):
-    local = local.strip()
-    fila = df_clasificador_locales[df_clasificador_locales.iloc[:, 0].astype(str).str.strip() == local]
-    if not fila.empty:
-        DESCRIP_LOCAL = str(fila.iloc[0, 1]).strip().replace(" ", "_")
-        EDIFICIO = str(fila.iloc[0, 2]).strip().replace(" ", "_")
-        return DESCRIP_LOCAL, EDIFICIO  # Devolver valores 
+# Look up location in the classifier and return LOCATION_DESC and BUILDING values
+def find_classifier_values(location):
+    location = location.strip()
+    row = df_location_classifier[df_location_classifier.iloc[:, 0].astype(str).str.strip() == location]
+    if not row.empty:
+        location_desc = str(row.iloc[0, 1]).strip().replace(" ", "_")
+        building = str(row.iloc[0, 2]).strip().replace(" ", "_")
+        return location_desc, building  # Return values
     return None
 
-# Función principal para recorrer y procesar la columna 
-def automatizar_y_procesar_datos(bd_nombre, usuario, contrasena, host, puerto, nombre_tabla, nombre_columna):
+# Main function to iterate and process the inventory column
+def sync_and_process_data(db_name, db_user, db_password, db_host, db_port, table_name, inventory_column):
     try:
-        logger.info('Iniciando sincronización de TAGs...')
+        logger.info('Starting TAG synchronization...')
 
-        # Conectar a la base de datos MySQL
+        # Connect to MySQL database
         connection = mysql.connector.connect(
-            database=bd_nombre,
-            user=usuario,
-            password=contrasena,
-            host=host,
-            port=puerto
+            database=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port
         )
         cursor = connection.cursor()
 
-        # Ejecutar la consulta
-        consulta = f'SELECT * FROM {nombre_tabla}'
-        cursor.execute(consulta)
-        filas_bd = cursor.fetchall()
-        nombres_columnas = [desc[0] for desc in cursor.description]
+        # Execute query
+        query = f'SELECT * FROM {table_name}'
+        cursor.execute(query)
+        db_rows = cursor.fetchall()
+        column_names = [desc[0] for desc in cursor.description]
 
-        # Inicializar listas para diferentes condiciones
-        inventarios_mv = []
-        inventarios_vacios = []
-        inventarios_duplicados = []
-        inv_bd_no_estan_AR01 = []
-        locales_no_estan_clasificador = []
-        inventario_vistos = {} #Diccionario q almacena inventarios ya procesados ,se usa para detectar duplicados,
-        inventarios_en_bd = []  #Almacena todos los inventarios de la BD, se usa para detectar inventarios del AR01 no están en la BD
+        # Initialize lists for different conditions
+        vm_inventories = []
+        empty_inventories = []
+        duplicate_inventories = []
+        db_not_in_ar01 = []
+        locations_not_in_classifier = []
+        seen_inventories = {}  # Dict storing already-processed inventories, used to detect duplicates
+        db_inventory_list = []  # Stores all DB inventories, used to detect AR01 items missing from DB
 
-        # Inventario en AR01 sin espacios ("limpios")
-        inventarios_AR01_limpios = df_economia.iloc[:, 0].astype(str).str.strip().values
+        # Cleaned inventory numbers from AR01 (whitespace-stripped)
+        ar01_clean_inventories = df_finance.iloc[:, 0].astype(str).str.strip().values
 
-        for index, fila in enumerate(filas_bd, start=1):
-            numero_inventario = fila[nombres_columnas.index(nombre_columna)]  
-            valor_hadware_id = fila[nombres_columnas.index('HARDWARE_ID')]  
+        for index, row in enumerate(db_rows, start=1):
+            inventory_number = row[column_names.index(inventory_column)]
+            hardware_id_value = row[column_names.index('HARDWARE_ID')]
 
-            logger.info(f"{index}. {numero_inventario}")
+            logger.info(f"{index}. {inventory_number}")
 
-            if numero_inventario is None:
-                inventarios_vacios.append(fila)
-            elif numero_inventario == 'MV':
-                inventarios_mv.append(fila)
+            if inventory_number is None:
+                empty_inventories.append(row)
+            elif inventory_number == 'MV':
+                vm_inventories.append(row)
             else:
-                # Limpiamos el número de inventario
-                numero_inventario = str(numero_inventario).strip()
+                # Clean the inventory number
+                inventory_number = str(inventory_number).strip()
 
-                # Agregar el inventario en BD y en Vistos
-                inventarios_en_bd.append(numero_inventario)
-                inventario_vistos.setdefault(numero_inventario, []).append((fila, valor_hadware_id))
+                # Add to DB inventory list and seen dict
+                db_inventory_list.append(inventory_number)
+                seen_inventories.setdefault(inventory_number, []).append((row, hardware_id_value))
                 
-                # Verificar si el inventario no está en AR01
-                if numero_inventario not in inventarios_AR01_limpios:
-                    inv_bd_no_estan_AR01.append(fila)
+                # Check if inventory is not in AR01
+                if inventory_number not in ar01_clean_inventories:
+                    db_not_in_ar01.append(row)
 
-                local_encontrado = buscar_inventario_y_local(numero_inventario)
-                if local_encontrado:
-                    valores = buscar_valores_en_clasificador(local_encontrado)
-                    if valores:
-                        descripcion_local, edificio = valores
-                        resultado_valores = f"[ {edificio}-{descripcion_local} ]"
-                        resultado_valores_bd = f"{edificio}-{descripcion_local}"
+                found_location = find_inventory_location(inventory_number)
+                if found_location:
+                    values = find_classifier_values(found_location)
+                    if values:
+                        location_desc, building = values
+                        tag_display = f"[ {building}-{location_desc} ]"
+                        tag_db_value = f"{building}-{location_desc}"
 
-                        consulta_actualizacion = f'''
-                            UPDATE {nombre_tabla} 
+                        update_query = f'''
+                            UPDATE {table_name} 
                             SET `TAG` = %s 
-                            WHERE TRIM(`{nombre_columna}`) = %s
+                            WHERE TRIM(`{inventory_column}`) = %s
                         '''
-                        cursor.execute(consulta_actualizacion, (resultado_valores_bd, numero_inventario))
+                        cursor.execute(update_query, (tag_db_value, inventory_number))
                         connection.commit()
-                        logger.info(f"TAG actualizado para inventario {numero_inventario} con valor {resultado_valores}")
+                        logger.info(f"TAG updated for inventory {inventory_number} with value {tag_display}")
                     else:
-                        logger.warning(f"Local {local_encontrado} no encontrado en el clasificador para inventario {numero_inventario}")
-                        locales_no_estan_clasificador.append((numero_inventario, local_encontrado))
+                        logger.warning(f"Location {found_location} not found in classifier for inventory {inventory_number}")
+                        locations_not_in_classifier.append((inventory_number, found_location))
                 else:
-                    logger.warning(f"No se encontró el inventario {numero_inventario} en el AR01")
+                    logger.warning(f"Inventory {inventory_number} not found in AR01")
 
 
-        # Procesar duplicados 
-        for _, valores in inventario_vistos.items():
-            #Identificamos  duplicados
-            if len(valores) > 1:
-                # Ordenar por 'HARDWARE_ID' (mayor a menor)
-                valores_ordenados = sorted(valores, key=lambda x: x[nombres_columnas.index('HARDWARE_ID')], reverse=True)
+        # Process duplicates
+        for _, values in seen_inventories.items():
+            # Identify duplicates
+            if len(values) > 1:
+                # Sort by HARDWARE_ID (highest to lowest)
+                sorted_values = sorted(values, key=lambda x: x[column_names.index('HARDWARE_ID')], reverse=True)
 
-                for fila, _ in valores_ordenados:
-                    # Actualizar el TAG antes de agregar a la lista de duplicados
-                    numero_inventario = fila[nombres_columnas.index(nombre_columna)]
-                    local_encontrado = buscar_inventario_y_local(str(numero_inventario).strip())
-                    if local_encontrado:
-                        resultado_valores = buscar_valores_en_clasificador(local_encontrado)
-                        if resultado_valores:
-                            fila_como_dict = dict(zip(nombres_columnas, fila))  # Convertir la fila a diccionario
-                            fila_como_dict['TAG'] = f" {resultado_valores[1]}-{resultado_valores[0]} "  # Mantener corchetes en duplicados
-                            # Se agregan los inventarios duplicados con su TAG actualizado 
-                            inventarios_duplicados.append(fila_como_dict)
+                for row, _ in sorted_values:
+                    # Update TAG before adding to duplicates list
+                    inventory_number = row[column_names.index(inventory_column)]
+                    found_location = find_inventory_location(str(inventory_number).strip())
+                    if found_location:
+                        classifier_result = find_classifier_values(found_location)
+                        if classifier_result:
+                            row_as_dict = dict(zip(column_names, row))  # Convert row to dictionary
+                            row_as_dict['TAG'] = f" {classifier_result[1]}-{classifier_result[0]} "  # Keep brackets for duplicates
+                            # Add duplicate inventories with updated TAG
+                            duplicate_inventories.append(row_as_dict)
 
-        # Comparar inventarios de AR01 con los que están en la base de datos
-        inventarios_AR01_no_en_BD = [inv for inv in inventarios_AR01_limpios if inv not in inventarios_en_bd]
+        # Compare AR01 inventories with those in the database
+        ar01_not_in_db = [inv for inv in ar01_clean_inventories if inv not in db_inventory_list]
 
-        # Locales correspondientes a inventarios no encontrados en la DB
-        locales_correspondientes = [buscar_inventario_y_local(inv) for inv in inventarios_AR01_no_en_BD]
+        # Corresponding locations for inventories not found in DB
+        corresponding_locations = [find_inventory_location(inv) for inv in ar01_not_in_db]
 
-        # Generar DataFrames
-        def generar_dataframe_con_mensaje(data, columnas, mensaje_encontrado, mensaje_no_encontrado):
+        # Generate DataFrames
+        def generate_dataframe_with_message(data, columns, found_message, not_found_message):
             """
-            Genera un DataFrame si la lista 'data' no está vacía. 
-            Imprime el mensaje correspondiente si se encontraron o no elementos.
+            Generates a DataFrame if 'data' is not empty.
+            Prints the corresponding message for found/not-found results.
             """
             if data:
-                df = pd.DataFrame(data, columns=columnas)
-                logger.info(f"\n{mensaje_encontrado}")
+                df = pd.DataFrame(data, columns=columns)
+                logger.info(f"\n{found_message}")
                 logger.info(f"\n{df}")
             else:
-                df = pd.DataFrame(columns=columnas)
-                logger.info(f"\n{mensaje_no_encontrado}")
+                df = pd.DataFrame(columns=columns)
+                logger.info(f"\n{not_found_message}")
             return df
 
-        # Generar DataFrames optimizando la repetición
-        df_duplicados = generar_dataframe_con_mensaje(
-            inventarios_duplicados, 
-            nombres_columnas, 
-            "Filas con inventarios duplicados:", 
-            "No se encontraron filas con inventarios duplicados."
+        # Generate DataFrames for each category
+        df_duplicates = generate_dataframe_with_message(
+            duplicate_inventories, 
+            column_names, 
+            "Rows with duplicate inventories:", 
+            "No duplicate inventories found."
         )
 
-        df_vacios = generar_dataframe_con_mensaje(
-            inventarios_vacios, 
-            nombres_columnas, 
-            "Filas con 'None':", 
-            "No se encontraron filas con 'None'."
+        df_empty = generate_dataframe_with_message(
+            empty_inventories, 
+            column_names, 
+            "Rows with 'None':", 
+            "No rows with 'None' found."
         )
 
-        df_mv = generar_dataframe_con_mensaje(
-            inventarios_mv, 
-            nombres_columnas, 
-            "Filas con 'MV':", 
-            "No se encontraron filas con 'MV'."
+        df_vm = generate_dataframe_with_message(
+            vm_inventories, 
+            column_names, 
+            "Rows with 'MV' (Virtual Machines):", 
+            "No rows with 'MV' found."
         )
 
-        df_inv_bd_no_estan_AR01 = generar_dataframe_con_mensaje(
-            inv_bd_no_estan_AR01, 
-            nombres_columnas, 
-            "Inventarios de OCS no encontrados en AR01:", 
-            "Todos los inventarios están en AR01."
+        df_db_not_in_ar01 = generate_dataframe_with_message(
+            db_not_in_ar01, 
+            column_names, 
+            "OCS inventories not found in AR01:", 
+            "All inventories are in AR01."
         )
 
-        # DataFrame con inventarios que están en AR01 pero no en la base de datos
-        df_inv_AR01_no_estan_BD = pd.DataFrame({
-            'Inventario en AR01 no en DB': inventarios_AR01_no_en_BD,
-            'Local Correspondiente': locales_correspondientes
+        # DataFrame with inventories in AR01 but not in database
+        df_ar01_not_in_db = pd.DataFrame({
+            'AR01 Inventory not in DB': ar01_not_in_db,
+            'Corresponding Location': corresponding_locations
         })
 
-        # DataFrame para locales no encontrados en el clasificador
-        df_locales_no_estan_clasificador = generar_dataframe_con_mensaje(
-            locales_no_estan_clasificador, 
-            ['Inventario', 'Local'], 
-            "Locales no encontrados en el clasificador:", 
-            "Todos los locales están en el clasificador."
+        # DataFrame for locations not found in classifier
+        df_locations_not_in_classifier = generate_dataframe_with_message(
+            locations_not_in_classifier, 
+            ['Inventory', 'Location'], 
+            "Locations not found in classifier:", 
+            "All locations are in the classifier."
         )
 
-        # Función para ajustar el ancho de las columnas
-        def ajustar_ancho_columnas(writer):
-            for hoja in writer.sheets.values():
-                for columna in hoja.columns:
-                    # Obtener la longitud máxima de las celdas no vacías en la columna
-                    max_longitud = max(
-                        (len(str(celda.value)) for celda in columna if celda.value), 
+        # Function to auto-fit column widths
+        def auto_fit_columns(writer):
+            for sheet in writer.sheets.values():
+                for column in sheet.columns:
+                    # Get maximum length of non-empty cells in the column
+                    max_length = max(
+                        (len(str(cell.value)) for cell in column if cell.value), 
                         default=0
                     )
-                    # Ajustar el ancho de la columna
-                    ancho_ajustado = (max_longitud + 2) * 1.2
-                    hoja.column_dimensions[columna[0].column_letter].width = ancho_ajustado  
+                    # Adjust column width
+                    adjusted_width = (max_length + 2) * 1.2
+                    sheet.column_dimensions[column[0].column_letter].width = adjusted_width  
                       
-        # Guardar resultados en un archivo Excel
-        hojas_y_dataframes = [
-            ('Inventarios_Vacíos', df_vacios),
-            ('Inventarios_MV', df_mv),
-            ('Locales_no_están_Clasificador', df_locales_no_estan_clasificador),
-            ('Inventarios_Duplicados', df_duplicados),
-            ('Inv_BD_no_están_AR01', df_inv_bd_no_estan_AR01),
-            ('Inv_AR01_no_están_DB', df_inv_AR01_no_estan_BD)
+        # Save results to an Excel file
+        sheets_and_dataframes = [
+            ('Empty_Inventories', df_empty),
+            ('VM_Inventories', df_vm),
+            ('Locations_Not_In_Classifier', df_locations_not_in_classifier),
+            ('Duplicate_Inventories', df_duplicates),
+            ('DB_Not_In_AR01', df_db_not_in_ar01),
+            ('AR01_Not_In_DB', df_ar01_not_in_db)
         ]
 
         with pd.ExcelWriter('Reportes.xlsx', engine='openpyxl') as writer:
-            for nombre_hoja, df in hojas_y_dataframes:
-                df.to_excel(writer, sheet_name=nombre_hoja, index=False)
+            for sheet_name, df in sheets_and_dataframes:
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-             # Ajustar el ancho de las columnas
-            ajustar_ancho_columnas(writer)
+             # Auto-fit column widths
+            auto_fit_columns(writer)
 
-        logger.info("\nInforme generado con éxito: Reportes.xlsx")
+        logger.info("\nReport generated successfully: Reportes.xlsx")
 
     except mysql.connector.Error as err:
-        logger.error(f"Error de base de datos: {err}")
+        logger.error(f"Database error: {err}")
     except Exception as e:
-        logger.error(f"Error inesperado: {e}")
+        logger.error(f"Unexpected error: {e}")
     finally:
         if 'cursor' in locals():
             cursor.close()
         if 'connection' in locals() and connection.is_connected():
             connection.close()
-        logger.info('Sincronización finalizada.')
+        logger.info('Synchronization completed.')
 
-# Llamar a la función principal
-automatizar_y_procesar_datos(bd_nombre, usuario, contrasena, host, puerto, nombre_tabla, nombre_columna)
+# Call the main function
+sync_and_process_data(db_name, db_user, db_password, db_host, db_port, table_name, inventory_column)
 

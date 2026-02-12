@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión — ETECSA Asset Sync</title>
+    <title>Log In — ETECSA Asset Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
@@ -199,7 +199,7 @@
                 <i class="bi bi-hdd-network"></i>
             </div>
             <h1>ETECSA Asset Sync</h1>
-            <p>Sistema de Gestión de Activos IT</p>
+            <p>IT Asset Management System</p>
         </div>
 
         {% if messages %}
@@ -213,26 +213,26 @@
         <form method="POST" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="form-group">
-                <label for="username">Usuario</label>
+                <label for="username">Username</label>
                 <div class="input-wrapper">
                     <i class="bi bi-person"></i>
-                    <input type="text" id="username" name="username" placeholder="Ingrese su usuario" required autofocus>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required autofocus>
                 </div>
             </div>
             <div class="form-group">
-                <label for="password">Contraseña</label>
+                <label for="password">Password</label>
                 <div class="input-wrapper">
                     <i class="bi bi-lock"></i>
-                    <input type="password" id="password" name="password" placeholder="Ingrese su contraseña" required>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
                 </div>
             </div>
             <button type="submit" class="btn-login">
-                <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                <i class="bi bi-box-arrow-in-right"></i> Log In
             </button>
         </form>
 
         <div class="form-footer">
-            ¿No tienes cuenta? <a href="{% url 'register' %}">Crear una cuenta</a>
+            Don't have an account? <a href="{% url 'register' %}">Create one</a>
         </div>
     </div>
 </body>

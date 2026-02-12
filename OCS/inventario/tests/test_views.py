@@ -158,13 +158,13 @@ class TestReportViews(TestCase):
         self.client.login(username="reporter", password="report123")
 
     def test_no_reports_renders_fallback(self):
-        """When no report file exists, should show no_reportes template."""
-        response = self.client.get(reverse("mostrar_reportes"))
+        """When no report file exists, should show fallback template."""
+        response = self.client.get(reverse("show_reports"))
         self.assertEqual(response.status_code, 200)
 
-    def test_descargar_registros_no_file(self):
+    def test_download_logs_no_file(self):
         """Download should redirect when file doesn't exist."""
-        response = self.client.get(reverse("descargar_registros"))
+        response = self.client.get(reverse("download_logs"))
         self.assertEqual(response.status_code, 302)
 
 
@@ -180,14 +180,14 @@ class TestSyncView(TestCase):
 
     def test_sync_get_redirects(self):
         """GET request to sync should redirect to accountinfo."""
-        response = self.client.get(reverse("actualizar_tags"))
+        response = self.client.get(reverse("sync_tags"))
         self.assertEqual(response.status_code, 302)
 
     @patch("inventario.views.call_command")
     def test_sync_post_success(self, mock_call):
         """POST to sync should call management command and redirect."""
         mock_call.return_value = None
-        response = self.client.post(reverse("actualizar_tags"))
+        response = self.client.post(reverse("sync_tags"))
         self.assertEqual(response.status_code, 302)
         mock_call.assert_called_once_with("sync_tags")
 
@@ -195,5 +195,5 @@ class TestSyncView(TestCase):
     def test_sync_post_error(self, mock_call):
         """POST to sync with error should show error message."""
         mock_call.side_effect = Exception("DB connection failed")
-        response = self.client.post(reverse("actualizar_tags"))
+        response = self.client.post(reverse("sync_tags"))
         self.assertEqual(response.status_code, 302)

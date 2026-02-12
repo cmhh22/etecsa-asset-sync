@@ -38,14 +38,14 @@ class TestLocationModels(TestCase):
     def setUp(self):
         self.municipio = Municipio.objects.create(nombre_municipio="Cienfuegos")
         self.edificio = Edificio.objects.create(
-            nombre_edificio="Edificio Central", municipio=self.municipio
+            nombre_edificio="Central Building", municipio=self.municipio
         )
         self.departamento = Departamento.objects.create(
-            nombre_departamento="Informática", abreviatura="INF"
+            nombre_departamento="IT", abreviatura="IT"
         )
         self.local = Local.objects.create(
             numero_local="LOC-001",
-            descripcion_local="Sala de servidores",
+            descripcion_local="Server Room",
             edificio=self.edificio,
             departamento=self.departamento,
         )
@@ -60,13 +60,13 @@ class TestLocationModels(TestCase):
         self.assertEqual(str(self.municipio), "Cienfuegos")
 
     def test_edificio_str(self):
-        self.assertEqual(str(self.edificio), "Edificio Central")
+        self.assertEqual(str(self.edificio), "Central Building")
 
     def test_edificio_municipio_relation(self):
         self.assertEqual(self.edificio.municipio, self.municipio)
 
     def test_departamento_str(self):
-        self.assertEqual(str(self.departamento), "Informática")
+        self.assertEqual(str(self.departamento), "IT")
 
     def test_local_str(self):
         self.assertEqual(str(self.local), "LOC-001")

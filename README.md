@@ -1,34 +1,41 @@
 # ETECSA Asset Sync
 
-> 🏢 **Real-world IT asset management system deployed at ETECSA (Cuba's national telecom) in 2024**  
-> Automates cross-referencing of MySQL + Excel data sources across IT, Finance, and HR departments
+> 🏢 **Production IT asset management system deployed at ETECSA (Cuba's national telecom)**  
+> Automates cross-referencing of database + Excel data sources across IT, Finance, and HR departments
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/django-5.1-green?logo=django&logoColor=white" alt="Django">
-  <img src="https://img.shields.io/badge/mysql-8.0-orange?logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/sqlite%20%7C%20mysql-supported-orange?logo=sqlite&logoColor=white" alt="DB">
   <img src="https://img.shields.io/badge/docker-ready-blue?logo=docker&logoColor=white" alt="Docker">
   <img src="https://img.shields.io/badge/tests-45+-success?logo=pytest&logoColor=white" alt="Tests">
-  <img src="https://img.shields.io/badge/CI-passing-brightgreen?logo=github-actions" alt="CI">
+  <img src="https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-brightgreen?logo=github-actions" alt="CI">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="License">
 </p>
 
 ---
 
 ## Overview
 
-**ETECSA Asset Sync** replaces a fully manual workflow at ETECSA Cienfuegos that required operators to cross-reference computer inventory data across 3 separate systems (OCS Inventory MySQL database, Finance Excel reports, HR location classifiers) to assign office/building tags to each asset.
+**ETECSA Asset Sync** is an IT asset management system deployed in production at ETECSA, Cuba's national telecommunications company. It automates the synchronization between the OCS Inventory database, financial reports (AR01), and the HR location classifier — eliminating the manual cross-referencing process that previously required operators to match assets one by one across three separate systems.
 
-**Production deployment:**
-- The standalone Python script (`script_actualizar_TAG.py`) **is operational today** at ETECSA Cienfuegos
+### Production Tool: The Script
+
+The **standalone Python script** ([script_actualizar_TAG.py](OCS/script_actualizar_TAG.py)) is the core production tool that runs at ETECSA Cienfuegos:
+- Connects to the OCS Inventory MySQL database
+- Cross-references each asset with the Finance AR01 Excel report and the HR Location Classifier
+- Generates TAGs in `Building-Office` format and updates the database in bulk
+- Produces a multi-sheet Excel report with anomalies (duplicates, missing records, orphans)
 - Processes hundreds of assets across all municipal offices in the province
-- Runs on scheduled basis to maintain data integrity
 
-**This repository:**
-- Preserves the original production script (still functional)
-- Adds a Django web interface as a **portfolio demonstration**
-- Includes AI-powered analytics with anomaly detection
-- 45+ automated tests with CI/CD pipeline
-- Production-ready Docker deployment
+### Web Demo: The Dashboard
+
+The **Django web interface** was built as a portfolio extension to showcase the project with a visual layer:
+- Interactive dashboard with real-time statistics and Chart.js visualizations
+- AI-powered analytics engine (anomaly detection, data quality scoring, entropy analysis)
+- Asset browsing with search and filtering
+- Report generation and download
+- **Note:** The web layer is a demonstration — the script is what runs in production
 
 ---
 
@@ -36,7 +43,7 @@
 
 | Category | Capabilities |
 |----------|-------------|
-| **Data Integration** | Merges MySQL + 2 Excel sources (Finance AR01, HR Classifier) |
+| **Data Integration** | Merges DB + 2 Excel sources (Finance AR01, HR Classifier) |
 | **Bulk Updates** | Updates hundreds of TAG fields (`Building-Office` format) in seconds |
 | **Anomaly Detection** | Identifies duplicates, missing records, orphans, outliers (z-score) |
 | **AI Analytics** | Data quality scoring (0-100), entropy analysis, predictive insights |
@@ -49,7 +56,26 @@
 
 ## Quick Start
 
-### Option 1: Docker (Recommended)
+### Option 1: Local Development (Fastest)
+
+```bash
+git clone https://github.com/cmhh22/etecsa-asset-sync.git
+cd etecsa-asset-sync/OCS
+python -m venv ../env
+# Windows:
+..\env\Scripts\activate
+# macOS/Linux:
+source ../env/bin/activate
+
+pip install -r requirements.txt
+cp .env.example .env    # Uses SQLite by default — no extra setup
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver
+# → http://localhost:8000 (admin / admin123)
+```
+
+### Option 2: Docker
 
 ```bash
 git clone https://github.com/cmhh22/etecsa-asset-sync.git
@@ -59,51 +85,45 @@ docker-compose exec web python manage.py seed_demo
 # → http://localhost:8000 (admin / admin123)
 ```
 
-### Option 2: Local Development
-
-```bash
-cd etecsa-asset-sync/OCS
-python -m venv ../env && ..\env\Scripts\activate  # Windows
-pip install -r requirements.txt
-cp .env.example .env  # Edit: DB_ENGINE=django.db.backends.sqlite3
-python manage.py migrate && python manage.py seed_demo
-python manage.py runserver
-```
-
 ### Option 3: Deploy Free on PythonAnywhere (No Credit Card)
 
-**100% free forever, no credit card required** — Perfect for portfolio/demo:
-
-1. Sign up at [PythonAnywhere](https://www.pythonanywhere.com/registration/register/beginner/)
-2. Open **Bash console** → Clone repo + setup virtualenv
-3. Configure **Web app** → Set WSGI + static files paths
-4. **Reload** → Your app: `http://your-username.pythonanywhere.com`
-
-📖 **[Full PythonAnywhere deployment guide](docs/PYTHONANYWHERE_DEPLOY.md)** (paso a paso en español)
+📖 **[Full PythonAnywhere deployment guide](docs/PYTHONANYWHERE_DEPLOY.md)** (step-by-step)
 
 ---
 
 ## Project Structure
 
 ```
-OCS/
-├── script_actualizar_TAG.py      # ⚡ Original production script (still operational)
-├── manage.py
-├── inventario/
-│   ├── models.py                 # Asset, Building, Municipio models
-│   ├── views.py                  # Dashboard, analytics, API endpoints
-│   ├── services/
-│   │   ├── data_sources.py       # ETL for Excel + MySQL
-│   │   ├── processors.py         # TAG sync logic
-│   │   ├── reporters.py          # Excel report generator
-│   │   └── analytics.py          # AI engine (z-score, entropy, quality scoring)
-│   ├── management/commands/
-│   │   ├── sync_tags.py          # CLI: python manage.py sync_tags
-│   │   ├── analyze_assets.py     # CLI: python manage.py analyze_assets --json
-│   │   └── seed_demo.py          # CLI: python manage.py seed_demo
-│   └── tests/                    # 45+ pytest tests
-├── templates/                    # Bootstrap 5.3 + Chart.js UI
-└── demo_data/                    # Sample Excel files for testing
+etecsa-asset-sync/
+├── .github/workflows/ci.yml     # CI/CD pipeline (lint → test → security → docker)
+├── Dockerfile                   # Production container
+├── docker-compose.yml           # Multi-service orchestration
+├── render.yaml                  # Render.com deployment blueprint
+├── build.sh                     # Build script for PaaS platforms
+├── docs/
+│   ├── ARCHITECTURE.md          # System design & database schema
+│   ├── PYTHONANYWHERE_DEPLOY.md # Free deployment guide
+│   └── TECHNOLOGIES.md          # Educational tech reference
+└── OCS/
+    ├── script_actualizar_TAG.py # ⚡ Original production script
+    ├── manage.py
+    ├── inventario/
+    │   ├── models.py            # Asset, Building, Municipio models
+    │   ├── views.py             # Dashboard, analytics, API endpoints
+    │   ├── forms.py             # Login & registration forms
+    │   ├── admin.py             # Django admin configuration
+    │   ├── services/
+    │   │   ├── data_sources.py  # ETL for Excel data
+    │   │   ├── processors.py    # TAG sync engine (Django ORM)
+    │   │   ├── reporters.py     # Excel report generator
+    │   │   └── analytics.py     # AI engine (z-score, entropy, quality)
+    │   ├── management/commands/
+    │   │   ├── sync_tags.py     # CLI: python manage.py sync_tags
+    │   │   ├── analyze_assets.py # CLI: python manage.py analyze_assets
+    │   │   └── seed_demo.py     # CLI: python manage.py seed_demo
+    │   └── tests/               # 45+ pytest tests
+    ├── templates/               # Bootstrap 5.3 + Chart.js UI
+    └── demo_data/               # Sample Excel files for testing
 ```
 
 ---
@@ -113,10 +133,11 @@ OCS/
 ```bash
 cd OCS
 
-# Run TAG synchronization (cross-reference MySQL + Excel)
+# Synchronize TAGs (cross-reference DB + Excel)
 python manage.py sync_tags
+python manage.py sync_tags --dry-run       # Preview without changes
 
-# Run AI analytics (anomaly detection + data quality)
+# AI analytics (anomaly detection + data quality)
 python manage.py analyze_assets --json --output report.json
 
 # Seed demo data (20 assets, 4 municipalities, admin user)
@@ -131,66 +152,69 @@ Built-in intelligence without external APIs:
 
 | Feature | Method | Output |
 |---------|--------|--------|
-| **Anomaly Detection** | Z-score outliers (>2σ) | Duplicates, missing TAGs, orphans, building outliers |
-| **Data Quality** | Weighted composite | 0-100 score (A-F grade) based on completeness, consistency, uniqueness, validity |
-| **Distribution Balance** | Shannon entropy | 0.0-1.0 score (0=all in one category, 1=perfectly balanced) |
-| **Predictions** | Heuristic estimation | Sync time, coverage projections, prioritized recommendations |
+| **Anomaly Detection** | Z-score outliers (>2σ) | Duplicates, missing TAGs, orphans |
+| **Data Quality** | Weighted composite | 0-100 score (A-F grade) |
+| **Distribution Balance** | Shannon entropy | 0.0-1.0 balance score |
+| **Predictions** | Heuristic estimation | Sync time, coverage projections |
 
-**Access**:
-- Web UI: `/analytics/` (interactive dashboard)
-- REST API: `/api/analytics/` (JSON)
+**Access:**
+- Web UI: `/analytics/` — Interactive dashboard
+- REST API: `/api/analytics/` — JSON endpoint
 - CLI: `python manage.py analyze_assets`
 
 ---
 
 ## Tech Stack
 
-- **Backend**: Python 3.12 + Django 5.1 + MySQL 8.0
-- **Data Processing**: Pandas 2.2, NumPy 2.1, OpenPyXL
-- **Frontend**: Bootstrap 5.3, Chart.js 4.4
-- **Testing**: pytest (45+ tests), GitHub Actions CI
-- **Production**: Gunicorn, WhiteNoise, Docker, HSTS
-- **AI/Analytics**: NumPy (z-score), entropy analysis, composite scoring
+| Layer | Technologies |
+|-------|-------------|
+| **Backend** | Python 3.12, Django 5.1, Django ORM |
+| **Database** | SQLite (default/free) · MySQL 8.0 (optional) |
+| **Data Processing** | Pandas 2.2, NumPy 2.1, OpenPyXL |
+| **Frontend** | Bootstrap 5.3, Chart.js 4.4, DataTables |
+| **Testing** | pytest (45+ tests), pytest-cov, flake8, black, isort |
+| **CI/CD** | GitHub Actions (lint → test → security → docker) |
+| **Production** | Gunicorn, WhiteNoise, Docker, HSTS |
+| **Deployment** | PythonAnywhere (free), Render, Docker |
+
+📖 **[Full technology guide](docs/TECHNOLOGIES.md)** — Educational reference for each technology
 
 ---
 
 ## Documentation
 
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — System design, services layer, database schema, security
-- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Docker, Render, VPS (Ubuntu), environment variables
-- **[PYTHONANYWHERE_DEPLOY.md](docs/PYTHONANYWHERE_DEPLOY.md)** — 🆓 FREE deployment (no credit card)
+| Document | Description |
+|----------|-------------|
+| **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** | System design, services layer, database schema, security |
+| **[TECHNOLOGIES.md](docs/TECHNOLOGIES.md)** | Educational guide to all technologies used |
+| **[PYTHONANYWHERE_DEPLOY.md](docs/PYTHONANYWHERE_DEPLOY.md)** | 🆓 FREE deployment guide (no credit card) |
 
 ---
 
 ## Testing
 
 ```bash
+cd OCS
+
 # Run all tests
 python -m pytest
 
-# Coverage report
+# With coverage report
 python -m pytest --cov=inventario --cov-report=term-missing
 
 # Specific module
 python -m pytest inventario/tests/test_analytics.py -v
 ```
 
-GitHub Actions CI runs on every push: **Lint** → **Test** (Python 3.11/3.12 + MySQL) → **Security audit** → **Docker build**
+**CI Pipeline** runs on every push: **Lint** (flake8, black, isort) → **Test** (Python 3.11/3.12) → **Security audit** → **Docker build**
 
 ---
 
-## Production Context
+## Author
 
-**Deployed at ETECSA Cienfuegos (2024)**:
-- Automated TAG assignment for all computer assets across municipal offices
-- Replaced manual workflow requiring 3 operators
-- Still operational today, runs on scheduled basis
-
-**This GitHub repository**:
-- Original production script preserved as-is
-- Modern Django web interface as portfolio demonstration
-- AI analytics, automated testing, CI/CD pipeline
-- Showcases full-stack development + DevOps capabilities
+**Carlos Manuel Hernández Hernández**  
+Cybernetics Student · Full-Stack Developer  
+📧 [GitHub](https://github.com/cmhh22)
 
 ---
 
@@ -200,4 +224,4 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
-**Built with real-world production experience** | [GitHub Issues](https://github.com/cmhh22/etecsa-asset-sync/issues)
+**Built with real-world production experience at ETECSA** | [GitHub Issues](https://github.com/cmhh22/etecsa-asset-sync/issues)

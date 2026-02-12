@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Inventario — ETECSA Asset Sync{% endblock %}
+{% block title %}Inventory — ETECSA Asset Sync{% endblock %}
 {% block nav_assets %}active{% endblock %}
-{% block page_title %}Inventario de Activos{% endblock %}
+{% block page_title %}Asset Inventory{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -20,16 +20,16 @@
     <div class="d-flex gap-2 align-items-center">
         <div class="input-group" style="width: 320px;">
             <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input type="text" class="form-control" placeholder="Buscar por inventario, TAG, usuario..."
+            <input type="text" class="form-control" placeholder="Search by inventory, TAG, user..."
                    id="searchInput">
         </div>
-        <span class="badge bg-secondary badge-etecsa" id="rowCount">{{ cuentas|length }} registros</span>
+        <span class="badge bg-secondary badge-etecsa" id="rowCount">{{ assets|length }} records</span>
     </div>
     <div class="d-flex gap-2">
-        <form action="{% url 'actualizar_tags' %}" method="post" class="d-inline">
+        <form action="{% url 'sync_tags' %}" method="post" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn btn-etecsa" onclick="showLoading()">
-                <i class="bi bi-arrow-repeat me-1"></i> Sincronizar TAGs
+                <i class="bi bi-arrow-repeat me-1"></i> Sync TAGs
             </button>
         </form>
     </div>
@@ -43,11 +43,11 @@
         <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
         {% if message.tags == 'success' %}
         <div class="mt-2">
-            <a href="{% url 'descargar_registros' %}" class="btn btn-sm btn-outline-dark">
-                <i class="bi bi-file-text me-1"></i>Descargar Log
+            <a href="{% url 'download_logs' %}" class="btn btn-sm btn-outline-dark">
+                <i class="bi bi-file-text me-1"></i>Download Log
             </a>
-            <a href="{% url 'mostrar_reportes' %}" class="btn btn-sm btn-outline-primary">
-                <i class="bi bi-file-earmark-bar-graph me-1"></i>Ver Reportes
+            <a href="{% url 'show_reports' %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-file-earmark-bar-graph me-1"></i>View Reports
             </a>
         </div>
         {% endif %}
@@ -66,10 +66,10 @@
                     <tr>
                         <th>HW ID</th>
                         <th>TAG</th>
-                        <th>Edificio</th>
-                        <th>No. Inventario</th>
-                        <th>Usuario</th>
-                        <th>Observaciones</th>
+                        <th>Building</th>
+                        <th>Inventory No.</th>
+                        <th>User</th>
+                        <th>Notes</th>
                         <th>fields_3</th>
                         <th>fields_4</th>
                         <th>fields_5</th>
@@ -82,41 +82,41 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for cuenta in cuentas %}
+                    {% for asset in assets %}
                     <tr>
-                        <td><code>{{ cuenta.hardware_id }}</code></td>
+                        <td><code>{{ asset.hardware_id }}</code></td>
                         <td>
-                            {% if cuenta.tag %}
-                                <span class="badge bg-success badge-etecsa">{{ cuenta.tag }}</span>
+                            {% if asset.tag %}
+                                <span class="badge bg-success badge-etecsa">{{ asset.tag }}</span>
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td>{{ cuenta.edificio|default:"—" }}</td>
-                        <td>{{ cuenta.noinventario|default:"—" }}</td>
-                        <td>{{ cuenta.usuario|default:"—" }}</td>
-                        <td>{{ cuenta.observaciones|default:"—"|truncatechars:40 }}</td>
+                        <td>{{ asset.edificio|default:"—" }}</td>
+                        <td>{{ asset.noinventario|default:"—" }}</td>
+                        <td>{{ asset.usuario|default:"—" }}</td>
+                        <td>{{ asset.observaciones|default:"—"|truncatechars:40 }}</td>
                         <td>
-                            {% if cuenta.fields_3 == "MV" %}
+                            {% if asset.fields_3 == "MV" %}
                                 <span class="badge bg-info badge-etecsa">MV</span>
                             {% else %}
-                                {{ cuenta.fields_3|default:"—" }}
+                                {{ asset.fields_3|default:"—" }}
                             {% endif %}
                         </td>
-                        <td>{{ cuenta.fields_4|default:"—" }}</td>
-                        <td>{{ cuenta.fields_5|default:"—" }}</td>
-                        <td>{{ cuenta.fields_6|default:"—" }}</td>
-                        <td>{{ cuenta.fields_7|default:"—" }}</td>
-                        <td>{{ cuenta.fields_8|default:"—" }}</td>
-                        <td>{{ cuenta.fields_9|default:"—" }}</td>
-                        <td>{{ cuenta.fields_10|default:"—" }}</td>
-                        <td>{{ cuenta.fields_11|default:"—" }}</td>
+                        <td>{{ asset.fields_4|default:"—" }}</td>
+                        <td>{{ asset.fields_5|default:"—" }}</td>
+                        <td>{{ asset.fields_6|default:"—" }}</td>
+                        <td>{{ asset.fields_7|default:"—" }}</td>
+                        <td>{{ asset.fields_8|default:"—" }}</td>
+                        <td>{{ asset.fields_9|default:"—" }}</td>
+                        <td>{{ asset.fields_10|default:"—" }}</td>
+                        <td>{{ asset.fields_11|default:"—" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="15" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            No hay registros en la base de datos
+                            No records in the database
                         </td>
                     </tr>
                     {% endfor %}
@@ -144,7 +144,7 @@
             row.style.display = match ? '' : 'none';
             if (match) visible++;
         });
-        rowCount.textContent = `${visible} registros`;
+        rowCount.textContent = `${visible} records`;
     });
 </script>
 {% endblock %}

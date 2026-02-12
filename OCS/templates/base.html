@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="es" data-bs-theme="light">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -278,12 +278,12 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {% block nav_assets %}{% endblock %}" href="{% url 'accountinfo' %}">
-                        <i class="bi bi-pc-display"></i> Inventario
+                        <i class="bi bi-pc-display"></i> Inventory
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% block nav_reports %}{% endblock %}" href="{% url 'mostrar_reportes' %}">
-                        <i class="bi bi-file-earmark-bar-graph"></i> Reportes
+                    <a class="nav-link {% block nav_reports %}{% endblock %}" href="{% url 'show_reports' %}">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Reports
                     </a>
                 </li>
                 <li class="nav-item">
@@ -292,13 +292,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'exportar_reportes' %}">
-                        <i class="bi bi-download"></i> Exportar
+                    <a class="nav-link" href="{% url 'export_reports' %}">
+                        <i class="bi bi-download"></i> Export
                     </a>
                 </li>
                 <li class="nav-item mt-3">
                     <a class="nav-link text-danger" href="{% url 'logout' %}">
-                        <i class="bi bi-box-arrow-left"></i> Cerrar Sesión
+                        <i class="bi bi-box-arrow-left"></i> Log Out
                     </a>
                 </li>
             </ul>
@@ -353,9 +353,9 @@
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;" role="status">
-            <span class="visually-hidden">Cargando...</span>
+            <span class="visually-hidden">Loading...</span>
         </div>
-        <p class="text-muted fw-500">Procesando... Espere un momento</p>
+        <p class="text-muted fw-500">Processing... Please wait</p>
     </div>
 
     <!-- Bootstrap JS -->

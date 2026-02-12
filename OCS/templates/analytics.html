@@ -68,9 +68,9 @@
         flex-shrink: 0;
     }
 
-    .priority-alta { background: #fee2e2; color: #dc2626; }
-    .priority-media { background: #fef3c7; color: #d97706; }
-    .priority-baja { background: #e0f2fe; color: #0284c7; }
+    .priority-high { background: #fee2e2; color: #dc2626; }
+    .priority-medium { background: #fef3c7; color: #d97706; }
+    .priority-low { background: #e0f2fe; color: #0284c7; }
 </style>
 {% endblock %}
 
@@ -82,7 +82,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-pc-display fs-2 text-primary"></i>
                 <h3 class="fw-bold mt-2 mb-0">{{ summary.total_assets }}</h3>
-                <small class="text-muted">Total Activos</small>
+                <small class="text-muted">Total Assets</small>
             </div>
         </div>
     </div>
@@ -91,7 +91,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-exclamation-triangle fs-2 text-danger"></i>
                 <h3 class="fw-bold mt-2 mb-0">{{ summary.critical_anomalies }}</h3>
-                <small class="text-muted">Anomalías Críticas</small>
+                <small class="text-muted">Critical Anomalies</small>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-exclamation-circle fs-2 text-warning"></i>
                 <h3 class="fw-bold mt-2 mb-0">{{ summary.warning_anomalies }}</h3>
-                <small class="text-muted">Advertencias</small>
+                <small class="text-muted">Warnings</small>
             </div>
         </div>
     </div>
@@ -109,7 +109,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-shield-check fs-2 text-success"></i>
                 <h3 class="fw-bold mt-2 mb-0">{{ summary.quality_grade }}</h3>
-                <small class="text-muted">Grado de Calidad</small>
+                <small class="text-muted">Quality Grade</small>
             </div>
         </div>
     </div>
@@ -121,7 +121,7 @@
         <!-- Data Quality Card -->
         <div class="card content-card mb-4">
             <div class="card-header bg-white border-0 pt-3 pb-0">
-                <h6 class="fw-bold mb-0"><i class="bi bi-trophy me-2 text-warning"></i>Calidad de Datos</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-trophy me-2 text-warning"></i>Data Quality</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center gap-4 mb-3">
@@ -144,7 +144,7 @@
                 <!-- Quality Metrics Bars -->
                 <div class="mb-2">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="fw-semibold">Completitud</small>
+                        <small class="fw-semibold">Completeness</small>
                         <small>{{ data_quality.completeness }}%</small>
                     </div>
                     <div class="metric-bar">
@@ -153,7 +153,7 @@
                 </div>
                 <div class="mb-2">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="fw-semibold">Consistencia</small>
+                        <small class="fw-semibold">Consistency</small>
                         <small>{{ data_quality.consistency }}%</small>
                     </div>
                     <div class="metric-bar">
@@ -162,7 +162,7 @@
                 </div>
                 <div class="mb-2">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="fw-semibold">Unicidad</small>
+                        <small class="fw-semibold">Uniqueness</small>
                         <small>{{ data_quality.uniqueness }}%</small>
                     </div>
                     <div class="metric-bar">
@@ -171,7 +171,7 @@
                 </div>
                 <div class="mb-0">
                     <div class="d-flex justify-content-between mb-1">
-                        <small class="fw-semibold">Validez</small>
+                        <small class="fw-semibold">Validity</small>
                         <small>{{ data_quality.validity }}%</small>
                     </div>
                     <div class="metric-bar">
@@ -184,7 +184,7 @@
         <!-- Distribution Chart -->
         <div class="card content-card mb-4">
             <div class="card-header bg-white border-0 pt-3 pb-0">
-                <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Distribución de Activos</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Asset Distribution</h6>
             </div>
             <div class="card-body">
                 <canvas id="distributionChart" height="220"></canvas>
@@ -195,11 +195,11 @@
         {% if predictions.coverage %}
         <div class="card content-card">
             <div class="card-header bg-white border-0 pt-3 pb-0">
-                <h6 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Proyección de Cobertura</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-2 text-success"></i>Coverage Projection</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Cobertura actual</span>
+                    <span>Current coverage</span>
                     <span class="fw-bold">{{ predictions.coverage.current_pct }}%</span>
                 </div>
                 <div class="progress mb-3" style="height: 12px; border-radius: 6px;">
@@ -210,11 +210,11 @@
                 <div class="d-flex gap-3 mt-3">
                     <div class="text-center flex-fill p-2 rounded" style="background: #f0fdf4;">
                         <div class="fw-bold text-success fs-5">~{{ predictions.sync_estimate.estimated_resolved }}</div>
-                        <small class="text-muted">Resolución estimada</small>
+                        <small class="text-muted">Estimated resolved</small>
                     </div>
                     <div class="text-center flex-fill p-2 rounded" style="background: #fef3c7;">
                         <div class="fw-bold text-warning fs-5">{{ predictions.sync_estimate.pending_assets }}</div>
-                        <small class="text-muted">Pendientes</small>
+                        <small class="text-muted">Pending</small>
                     </div>
                 </div>
                 {% endif %}
@@ -230,7 +230,7 @@
             <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0">
                     <i class="bi bi-shield-exclamation me-2 text-danger"></i>
-                    Anomalías Detectadas
+                    Detected Anomalies
                     <span class="badge bg-secondary ms-2">{{ anomalies|length }}</span>
                 </h6>
             </div>
@@ -255,7 +255,7 @@
                     {% if anomaly.affected_assets %}
                     <details class="mt-2">
                         <summary class="small text-muted" style="cursor:pointer;">
-                            Ver afectados ({{ anomaly.affected_assets|length }})
+                            View affected ({{ anomaly.affected_assets|length }})
                         </summary>
                         <div class="d-flex flex-wrap gap-1 mt-1">
                             {% for asset in anomaly.affected_assets %}
@@ -268,7 +268,7 @@
                 {% empty %}
                 <div class="text-center text-muted py-4">
                     <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
-                    No se detectaron anomalías. ¡Los datos están en buen estado!
+                    No anomalies detected. Data is in good shape!
                 </div>
                 {% endfor %}
             </div>
@@ -278,7 +278,7 @@
         {% if predictions.recommendations %}
         <div class="card content-card mb-4">
             <div class="card-header bg-white border-0 pt-3 pb-0">
-                <h6 class="fw-bold mb-0"><i class="bi bi-lightbulb me-2 text-warning"></i>Recomendaciones AI</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-lightbulb me-2 text-warning"></i>AI Recommendations</h6>
             </div>
             <div class="card-body">
                 {% for rec in predictions.recommendations %}
@@ -290,7 +290,7 @@
                         <div class="fw-semibold">{{ rec.action }}</div>
                         <small class="text-muted">{{ rec.impact }}</small>
                         <span class="badge bg-{{ rec.priority|default:'secondary' }} ms-2"
-                              style="font-size: 0.6rem; text-transform: uppercase; {% if rec.priority == 'alta' %}background-color: #dc2626 !important;{% elif rec.priority == 'media' %}background-color: #d97706 !important;{% else %}background-color: #0284c7 !important;{% endif %}">
+                              style="font-size: 0.6rem; text-transform: uppercase; {% if rec.priority == 'high' %}background-color: #dc2626 !important;{% elif rec.priority == 'medium' %}background-color: #d97706 !important;{% else %}background-color: #0284c7 !important;{% endif %}">
                             {{ rec.priority }}
                         </span>
                     </div>
@@ -304,9 +304,9 @@
         {% if distribution.buildings %}
         <div class="card content-card">
             <div class="card-header bg-white border-0 pt-3 pb-0">
-                <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-primary"></i>Activos por Edificio</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-building me-2 text-primary"></i>Assets by Building</h6>
                 {% if distribution.building_balance %}
-                <small class="text-muted">Balance de distribución: {{ distribution.building_balance }}%</small>
+                <small class="text-muted">Distribution balance: {{ distribution.building_balance }}%</small>
                 {% endif %}
             </div>
             <div class="card-body">
@@ -389,7 +389,7 @@
             data: {
                 labels: Object.keys(data),
                 datasets: [{
-                    label: 'Activos',
+                    label: 'Assets',
                     data: Object.values(data),
                     backgroundColor: 'rgba(30, 58, 95, 0.8)',
                     borderRadius: 6,

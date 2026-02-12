@@ -42,8 +42,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output",
             type=str,
-            default="Reportes.xlsx",
-            help="Output path for the Excel report (default: Reportes.xlsx).",
+            default="Reports.xlsx",
+            help="Output path for the Excel report (default: Reports.xlsx).",
         )
 
     def handle(self, *args, **options):
@@ -55,32 +55,23 @@ class Command(BaseCommand):
         try:
             # Load Excel data sources
             data_sources = ExcelDataSources.load(
-                archivo_economia=config("EXCEL_ECONOMIA", default="AR01-1.xlsx"),
-                archivo_clasificador=config(
+                finance_file=config("EXCEL_ECONOMIA", default="AR01-1.xlsx"),
+                classifier_file=config(
                     "EXCEL_CLASIFICADOR",
                     default="CLASIFICADOR DE LOCALES -KARINA-1.xlsx",
                 ),
             )
-            self.stdout.write(f"  AR01 entries: {len(data_sources.df_economia)}")
+            self.stdout.write(f"  AR01 entries: {len(data_sources.df_finance)}")
             self.stdout.write(
-                f"  Classifier entries: {len(data_sources.df_clasificador)}"
+                f"  Classifier entries: {len(data_sources.df_classifier)}"
             )
 
-            # Database config
-            db_config = {
-                "database": config("DB_NAME", default="ocsweb"),
-                "user": config("DB_USER", default="root"),
-                "password": config("DB_PASSWORD", default=""),
-                "host": config("DB_HOST", default="localhost"),
-                "port": config("DB_PORT", default=3306, cast=int),
-            }
-
-            # Run sync
+            # Run sync (using Django ORM - works with SQLite, MySQL, PostgreSQL, etc.)
             processor = TagSyncProcessor(
                 data_sources=data_sources,
-                db_config=db_config,
-                nombre_tabla=config("TABLA_ACCOUNTINFO", default="accountinfo"),
-                nombre_columna=config("COLUMNA_INVENTARIO", default="fields_3"),
+                db_config={},  # Not used - Django ORM handles connection
+                table_name=config("TABLA_ACCOUNTINFO", default="accountinfo"),
+                column_name=config("COLUMNA_INVENTARIO", default="fields_3"),
             )
 
             if options["dry_run"]:

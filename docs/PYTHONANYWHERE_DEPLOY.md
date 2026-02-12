@@ -1,174 +1,187 @@
-# Deploy GRATIS en PythonAnywhere (Sin Tarjeta)
+# Free Deployment on PythonAnywhere (No Credit Card)
 
-PythonAnywhere es la **única opción 100% gratuita sin tarjeta de crédito** que soporta Django completamente.
+PythonAnywhere is the **only 100% free option without a credit card** that fully supports Django.
 
-## Paso 1: Crear Cuenta (5 minutos)
+> **⚠️ IMPORTANT**: MySQL is NOT available on free accounts. This guide uses **SQLite** which works perfectly and is included for free.
 
-1. Ve a https://www.pythonanywhere.com/registration/register/beginner/
-2. Completa el formulario (solo email, username, password)
-3. Verifica tu email
-4. Login en https://www.pythonanywhere.com
+## Which Database to Use?
 
-## Paso 2: Clonar el Proyecto
+### ✅ SQLite (RECOMMENDED for Free Tier)
+- **100% Free**, no limits
+- Already configured in your project
+- Perfect for demos, portfolios, and small/medium projects
+- No additional configuration needed
+- **FOLLOW THIS GUIDE** 👇
 
-1. En PythonAnywhere Dashboard, ve a **"Consoles"** tab
-2. Click en **"Bash"** para abrir una terminal
-3. Ejecuta estos comandos:
+### ❌ MySQL (Paid Plans Only)
+- Requires upgrade ($5/month minimum)
+- Only needed for projects with >100GB of data
+- Not required for this project
+
+---
+
+## Step 1: Create an Account (5 minutes)
+
+1. Go to https://www.pythonanywhere.com/registration/register/beginner/
+2. Complete the form (just email, username, password)
+3. Verify your email
+4. Log in at https://www.pythonanywhere.com
+
+## Step 2: Clone the Project
+
+1. On the PythonAnywhere Dashboard, go to the **"Consoles"** tab
+2. Click on **"Bash"** to open a terminal
+3. Run these commands:
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/cmhh22/etecsa-asset-sync.git
 
-# Entrar al directorio
+# Navigate to the project directory
 cd etecsa-asset-sync/OCS
 ```
 
-## Paso 3: Crear Entorno Virtual
+## Step 3: Create a Virtual Environment
 
 ```bash
-# Crear virtualenv con Python 3.12
+# Create virtualenv with Python 3.12
 mkvirtualenv --python=/usr/bin/python3.12 etecsa-env
 
-# Instalar dependencias
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Paso 4: Configurar Base de Datos MySQL
-
-1. En Dashboard, ve a **"Databases"** tab
-2. Click en **"Initialize MySQL"**
-3. Establece una contraseña (anótala)
-4. Copia el **hostname** (algo como `tu_usuario.mysql.pythonanywhere-services.com`)
-
-Vuelve a la consola Bash:
+## Step 4: Configure Environment Variables (SQLite)
 
 ```bash
 cd ~/etecsa-asset-sync/OCS
 
-# Crear archivo .env
+# Create .env file
 nano .env
 ```
 
-Pega esto (reemplaza con tus valores):
+Paste the following (replace `your_username` with your PythonAnywhere username):
 
 ```bash
-SECRET_KEY=tu-secret-key-aqui-genera-uno-largo
+# Django Settings
+SECRET_KEY=django-insecure-generate-a-secure-one-here-$(openssl rand -base64 32)
 DEBUG=False
-ALLOWED_HOSTS=tu_usuario.pythonanywhere.com
-DB_ENGINE=django.db.backends.mysql
-DB_NAME=tu_usuario$etecsa_db
-DB_USER=tu_usuario
-DB_PASSWORD=tu-password-mysql
-DB_HOST=tu_usuario.mysql.pythonanywhere-services.com
-DB_PORT=3306
-CSRF_TRUSTED_ORIGINS=http://tu_usuario.pythonanywhere.com
+ALLOWED_HOSTS=your_username.pythonanywhere.com
+
+# Database Configuration - SQLite (FREE TIER)
+DB_ENGINE=django.db.backends.sqlite3
+DB_NAME=db.sqlite3
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_PORT=
+
+# Script Configuration
+EXCEL_ECONOMIA=demo_data/AR01_demo.xlsx
+EXCEL_CLASIFICADOR=demo_data/clasificador_demo.xlsx
+TABLA_ACCOUNTINFO=accountinfo
+COLUMNA_INVENTARIO=fields_3
+ARCHIVO_REGISTRO=Registros.txt
+
+# Production Security
+CSRF_TRUSTED_ORIGINS=http://your_username.pythonanywhere.com
 SECURE_SSL_REDIRECT=False
 ```
 
-Guarda: `Ctrl+O`, `Enter`, `Ctrl+X`
+Save: `Ctrl+O`, `Enter`, `Ctrl+X`
 
-## Paso 5: Crear Base de Datos
+> **📝 Note**: SQLite creates the `db.sqlite3` file automatically. No additional configuration needed.
 
-```bash
-# En la consola Bash
-mysql -u tu_usuario -h tu_usuario.mysql.pythonanywhere-services.com -p
-
-# Cuando pida password, ingresa tu password de MySQL
-# Luego ejecuta:
-CREATE DATABASE tu_usuario$etecsa_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-EXIT;
-```
-
-## Paso 6: Migrar y Preparar
+## Step 5: Migrate and Prepare
 
 ```bash
 cd ~/etecsa-asset-sync/OCS
 
-# Activar virtualenv (si no está activo)
+# Activate virtualenv (if not already active)
 workon etecsa-env
 
-# Migrar base de datos
+# Migrate database (creates db.sqlite3 automatically)
 python manage.py migrate
 
-# Crear superusuario
+# Create superuser
 python manage.py createsuperuser
 # Username: admin
-# Email: tu@email.com
-# Password: admin123 (o el que prefieras)
+# Email: your@email.com
+# Password: admin123 (or your preferred password)
 
-# Seedear datos demo
+# Seed demo data
 python manage.py seed_demo
 
-# Recolectar archivos estáticos
+# Collect static files
 python manage.py collectstatic --noinput
 ```
 
-## Paso 7: Configurar Web App
+## Step 6: Configure Web App
 
 1. Dashboard → **"Web"** tab
 2. Click **"Add a new web app"**
-3. Selecciona **"Manual configuration"** (NO Django wizard)
+3. Select **"Manual configuration"** (NOT the Django wizard)
 4. Python version: **3.12**
 
-### Configurar Code & Virtualenv:
+### Configure Code & Virtualenv:
 
-En la página de configuración de Web App:
+On the Web App configuration page:
 
 **Code section:**
-- **Source code**: `/home/tu_usuario/etecsa-asset-sync/OCS`
-- **Working directory**: `/home/tu_usuario/etecsa-asset-sync/OCS`
+- **Source code**: `/home/your_username/etecsa-asset-sync/OCS`
+- **Working directory**: `/home/your_username/etecsa-asset-sync/OCS`
 
 **Virtualenv section:**
-- **Path**: `/home/tu_usuario/.virtualenvs/etecsa-env`
+- **Path**: `/home/your_username/.virtualenvs/etecsa-env`
 
-### Configurar WSGI:
+### Configure WSGI:
 
-1. Click en el link **"WSGI configuration file"** (algo como `/var/www/tu_usuario_pythonanywhere_com_wsgi.py`)
-2. **Borra todo el contenido**
-3. Pega esto:
+1. Click on the **"WSGI configuration file"** link (something like `/var/www/your_username_pythonanywhere_com_wsgi.py`)
+2. **Delete all existing content**
+3. Paste the following:
 
 ```python
 import os
 import sys
 
-# Agregar el proyecto al path
-path = '/home/tu_usuario/etecsa-asset-sync/OCS'
+# Add project to path
+path = '/home/your_username/etecsa-asset-sync/OCS'
 if path not in sys.path:
     sys.path.append(path)
 
-# Configurar Django settings
+# Configure Django settings
 os.environ['DJANGO_SETTINGS_MODULE'] = 'OCS.settings'
 
-# Cargar variables de entorno desde .env
+# Load environment variables from .env
 from pathlib import Path
 from decouple import config
 
-# Cargar la aplicación WSGI
+# Load WSGI application
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
-4. Reemplaza `tu_usuario` con tu username real
-5. **Save** (botón arriba a la derecha)
+4. Replace `your_username` with your actual username
+5. **Save** (button at the top right)
 
-### Configurar Static Files:
+### Configure Static Files:
 
-En la misma página de configuración, scroll a **"Static files"**:
+On the same configuration page, scroll to **"Static files"**:
 
 | URL | Directory |
 |-----|-----------|
-| `/static/` | `/home/tu_usuario/etecsa-asset-sync/OCS/staticfiles` |
+| `/static/` | `/home/your_username/etecsa-asset-sync/OCS/staticfiles` |
 
-Click **"Save"** después de cada entrada.
+Click **"Save"** after each entry.
 
-## Paso 8: Recargar y Probar
+## Step 7: Reload and Test
 
-1. Scroll arriba en la página Web
-2. Click en el botón verde **"Reload tu_usuario.pythonanywhere.com"**
-3. Espera ~10 segundos
-4. Click en tu URL: `http://tu_usuario.pythonanywhere.com`
+1. Scroll to the top of the Web page
+2. Click the green **"Reload your_username.pythonanywhere.com"** button
+3. Wait ~10 seconds
+4. Click your URL: `http://your_username.pythonanywhere.com`
 
-**Login**: admin / admin123 (o la contraseña que pusiste)
+**Login**: admin / admin123 (or the password you set)
 
 ---
 
@@ -176,32 +189,32 @@ Click **"Save"** después de cada entrada.
 
 ### Error "Something went wrong :("
 
-Ve a la sección **"Log files"** en tu Web tab:
-- Click en **"Error log"** para ver errores específicos
+Go to the **"Log files"** section on your Web tab:
+- Click **"Error log"** to see specific errors
 
-**Errores comunes:**
+**Common errors:**
 
 1. **ModuleNotFoundError**:
-   - Verifica que el virtualenv esté activado: `workon etecsa-env`
-   - Reinstala: `pip install -r requirements.txt`
+   - Verify the virtualenv is active: `workon etecsa-env`
+   - Reinstall: `pip install -r requirements.txt`
 
-2. **django.db.utils.OperationalError: (2002, "Can't connect to MySQL")**:
-   - Verifica `.env`: `DB_HOST` debe ser `tu_usuario.mysql.pythonanywhere-services.com`
-   - Verifica que creaste la base de datos
+2. **OperationalError: unable to open database file**:
+   - Check permissions: `chmod 664 db.sqlite3`
+   - Verify `.env` has `DB_ENGINE=django.db.backends.sqlite3`
 
 3. **CSRF verification failed**:
-   - En `.env`: `CSRF_TRUSTED_ORIGINS=http://tu_usuario.pythonanywhere.com` (sin `https://`)
+   - In `.env`: `CSRF_TRUSTED_ORIGINS=http://your_username.pythonanywhere.com` (no `https://`)
 
 4. **Static files not loading**:
-   - Ejecuta: `python manage.py collectstatic --noinput`
-   - Verifica la configuración de "Static files" en Web tab
+   - Run: `python manage.py collectstatic --noinput`
+   - Verify the "Static files" configuration in the Web tab
 
-### Re-deployar cambios
+### Re-deploying Changes
 
-Cada vez que actualices el código en GitHub:
+Every time you update the code on GitHub:
 
 ```bash
-# En consola Bash
+# In a Bash console
 cd ~/etecsa-asset-sync
 git pull origin main
 cd OCS
@@ -210,28 +223,29 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 ```
 
-Luego en Web tab: **"Reload"**
+Then in the Web tab: **"Reload"**
 
 ---
 
-## Limitaciones del Tier Gratuito
+## Free Tier Limitations
 
-| Limitación | Impacto |
-|------------|---------|
-| **No HTTPS** | No SSL en `tu_usuario.pythonanywhere.com` (solo HTTP) |
-| **512MB storage** | Suficiente para este proyecto (~50MB usado) |
-| **100MB MySQL** | OK para demo (20 assets = ~5MB) |
-| **2 consoles** | Suficiente para desarrollo |
-| **CPU 100s/día** | Límite diario alcanzado si hay mucho tráfico |
-| **Whitelist internet** | Solo puedes acceder a sitios aprobados desde código |
+| Limitation | Impact |
+|------------|--------|
+| **No HTTPS** | No SSL on `your_username.pythonanywhere.com` (HTTP only) |
+| **512MB storage** | Sufficient for this project (~50MB used) |
+| **SQLite Database** | Perfect for demos. No size limit (within 512MB storage) |
+| **No MySQL** | Not available on free tier (but SQLite works perfectly) |
+| **2 consoles** | Sufficient for development |
+| **CPU 100s/day** | Daily limit reached only with heavy traffic |
+| **Whitelisted internet** | Can only access approved sites from code |
 
-Para portafolio/demo es perfecto. Para producción real necesitarías plan pagado.
+✅ **Perfect for portfolio/demo purposes.** For production with thousands of concurrent users, a paid plan would be needed.
 
 ---
 
-## Actualizar proyecto después de cambios
+## Updating the Project After Changes
 
-1. Consola Bash:
+1. Bash console:
    ```bash
    cd ~/etecsa-asset-sync
    git pull origin main
@@ -245,27 +259,30 @@ Para portafolio/demo es perfecto. Para producción real necesitarías plan pagad
 
 ---
 
-## Backup de la Base de Datos
+## Database Backup (SQLite)
 
 ```bash
-# En consola Bash
-mysqldump -u tu_usuario -h tu_usuario.mysql.pythonanywhere-services.com -p tu_usuario$etecsa_db > backup_$(date +%Y%m%d).sql
+# In a Bash console
+cd ~/etecsa-asset-sync/OCS
+cp db.sqlite3 backup_db_$(date +%Y%m%d).sqlite3
+
+# Or download it from the Files tab on the Dashboard
 ```
 
 ---
 
-## Links Útiles
+## Useful Links
 
-- **Tu app**: http://tu_usuario.pythonanywhere.com
-- **Dashboard**: https://www.pythonanywhere.com/user/tu_usuario/
+- **Your app**: http://your_username.pythonanywhere.com
+- **Dashboard**: https://www.pythonanywhere.com/user/your_username/
 - **Help**: https://help.pythonanywhere.com/
 - **Forums**: https://www.pythonanywhere.com/forums/
 
 ---
 
-## Ejemplo de URL final
+## Example Final URL
 
-Si tu username es `cmhh22`:
+If your username is `cmhh22`:
 - **App**: http://cmhh22.pythonanywhere.com
 - **Login**: admin / admin123
 - **Analytics**: http://cmhh22.pythonanywhere.com/analytics/

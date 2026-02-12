@@ -133,7 +133,7 @@ class TestAnomalyDetection:
             assets.append({
                 "hardware_id": f"HW-{i}",
                 "tag": f"A-{100+i}",
-                "edificio": "Edificio A",
+                "edificio": "Building A",
                 "noinventario": f"INV-{i:06d}",
                 "usuario": f"user_{i}",
                 "observaciones": None,
@@ -159,7 +159,7 @@ class TestDataQuality:
             assets.append({
                 "hardware_id": f"HW-{i}",
                 "tag": f"EDIF-{100+i}",
-                "edificio": "Edificio A",
+                "edificio": "Building A",
                 "noinventario": f"INV-{i:06d}",
                 "usuario": f"user_{i}",
                 "observaciones": "OK",
@@ -211,8 +211,8 @@ class TestDistributions:
         engine._analyze_distributions(df)
 
         dist = engine.result.distribution["tag_status"]
-        assert dist["Con TAG"] == 1
-        assert dist["Máquinas Virtuales"] == 1
+        assert dist["With TAG"] == 1
+        assert dist["Virtual Machines"] == 1
 
     def test_building_distribution(self):
         """Should count assets per building from TAG prefix."""
@@ -246,7 +246,7 @@ class TestPredictions:
         engine._generate_predictions(df)
 
         recs = engine.result.predictions.get("recommendations", [])
-        sync_recs = [r for r in recs if "sincronización" in r["action"].lower()]
+        sync_recs = [r for r in recs if "sync" in r["action"].lower()]
         assert len(sync_recs) >= 1
 
     def test_coverage_projection(self):

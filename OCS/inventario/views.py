@@ -24,7 +24,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import AccountInfo
-from .forms import LoginForm, RegistroForm
+from .forms import LoginForm, RegisterForm
 from .services.analytics import AssetAnalyticsEngine
 
 logger = logging.getLogger(__name__)
@@ -36,20 +36,20 @@ logger = logging.getLogger(__name__)
 @login_required
 def dashboard(request):
     """Main dashboard with summary statistics and charts."""
-    cuentas = AccountInfo.objects.all()
-    total = cuentas.count()
+    assets = AccountInfo.objects.all()
+    total = assets.count()
 
-    with_tag = cuentas.exclude(tag__isnull=True).exclude(tag="").count()
+    with_tag = assets.exclude(tag__isnull=True).exclude(tag="").count()
     without_tag = total - with_tag
-    virtual_machines = cuentas.filter(fields_3="MV").count()
-    empty_inventory = cuentas.filter(
+    virtual_machines = assets.filter(fields_3="MV").count()
+    empty_inventory = assets.filter(
         Q(fields_3__isnull=True) | Q(fields_3="")
     ).count()
 
     # Assets by building (from TAG field: "Edificio-Local")
     buildings = {}
-    for cuenta in cuentas.exclude(tag__isnull=True).exclude(tag=""):
-        building = cuenta.tag.split("-")[0] if "-" in cuenta.tag else cuenta.tag
+    for asset in assets.exclude(tag__isnull=True).exclude(tag=""):
+        building = asset.tag.split("-")[0] if "-" in asset.tag else asset.tag
         buildings[building] = buildings.get(building, 0) + 1
 
     buildings_sorted = dict(
@@ -65,7 +65,7 @@ def dashboard(request):
         "tag_percentage": round((with_tag / total * 100) if total else 0, 1),
         "building_labels": list(buildings_sorted.keys()),
         "building_counts": list(buildings_sorted.values()),
-        "recent_assets": cuentas.order_by("-hardware_id")[:5],
+        "recent_assets": assets.order_by("-hardware_id")[:5],
     }
     return render(request, "dashboard.html", context)
 
@@ -74,10 +74,10 @@ def dashboard(request):
 # Asset Table
 # ---------------------------------------------------------------------------
 @login_required
-def mostrar_accountinfo(request):
+def show_assets(request):
     """Display the full asset inventory table."""
-    cuentas = AccountInfo.objects.all()
-    return render(request, "accountinfo.html", {"cuentas": cuentas})
+    assets = AccountInfo.objects.all()
+    return render(request, "accountinfo.html", {"assets": assets})
 
 
 # ---------------------------------------------------------------------------
@@ -85,15 +85,15 @@ def mostrar_accountinfo(request):
 # ---------------------------------------------------------------------------
 @csrf_exempt
 @login_required
-def actualizar_tags(request):
+def sync_tags(request):
     """Execute TAG synchronization via the management command."""
     if request.method == "POST":
         try:
             call_command("sync_tags")
-            messages.success(request, "TAGs actualizados con éxito.")
+            messages.success(request, "TAGs updated successfully.")
         except Exception as e:
-            logger.error(f"Error en sincronización: {e}")
-            messages.error(request, f"Error al actualizar TAGs: {e}")
+            logger.error(f"Sync error: {e}")
+            messages.error(request, f"Error updating TAGs: {e}")
         return HttpResponseRedirect(reverse("accountinfo"))
     return redirect("accountinfo")
 
@@ -102,55 +102,55 @@ def actualizar_tags(request):
 # Reports
 # ---------------------------------------------------------------------------
 @login_required
-def mostrar_reportes(request):
+def show_reports(request):
     """View generated Excel reports with sheet selector."""
     excel_path = os.path.join(settings.BASE_DIR, "Reportes.xlsx")
 
     try:
-        hojas = pd.ExcelFile(excel_path).sheet_names
-        hoja_seleccionada = request.GET.get("hoja", hojas[0])
-        df = pd.read_excel(excel_path, sheet_name=hoja_seleccionada)
-        filas = df.to_dict(orient="records")
+        sheets = pd.ExcelFile(excel_path).sheet_names
+        selected_sheet = request.GET.get("sheet", sheets[0])
+        df = pd.read_excel(excel_path, sheet_name=selected_sheet)
+        rows = df.to_dict(orient="records")
 
         sheet_counts = {}
-        for hoja in hojas:
-            sheet_counts[hoja] = len(pd.read_excel(excel_path, sheet_name=hoja))
+        for sheet in sheets:
+            sheet_counts[sheet] = len(pd.read_excel(excel_path, sheet_name=sheet))
 
         return render(request, "reportes.html", {
-            "filas": filas,
-            "hojas": hojas,
-            "hoja_seleccionada": hoja_seleccionada,
+            "rows": rows,
+            "sheets": sheets,
+            "selected_sheet": selected_sheet,
             "sheet_counts": sheet_counts,
-            "total_filas": len(filas),
+            "total_rows": len(rows),
         })
     except FileNotFoundError:
         return render(request, "no_reportes.html")
     except Exception as e:
-        logger.error(f"Error leyendo reportes: {e}")
+        logger.error(f"Error reading reports: {e}")
         return render(request, "no_reportes.html")
 
 
 @login_required
-def descargar_registros(request):
+def download_logs(request):
     """Download the sync log file."""
     filepath = os.path.join(settings.BASE_DIR, "Registros.txt")
     if os.path.exists(filepath):
         return FileResponse(
             open(filepath, "rb"), as_attachment=True, filename="Registros.txt"
         )
-    messages.warning(request, "No hay registros disponibles.")
+    messages.warning(request, "No log records available.")
     return redirect("accountinfo")
 
 
 @login_required
-def exportar_reportes(request):
+def export_reports(request):
     """Download the generated Excel report."""
     excel_path = os.path.join(settings.BASE_DIR, "Reportes.xlsx")
     if os.path.exists(excel_path):
         return FileResponse(
             open(excel_path, "rb"), as_attachment=True, filename="Reportes.xlsx"
         )
-    return render(request, "no_reportes.html", {"mensaje": "Aún no hay reportes generados."})
+    return render(request, "no_reportes.html", {"message": "No reports generated yet."})
 
 
 # ---------------------------------------------------------------------------
@@ -159,21 +159,21 @@ def exportar_reportes(request):
 @login_required
 def api_dashboard_stats(request):
     """Return dashboard statistics as JSON for dynamic charts."""
-    cuentas = AccountInfo.objects.all()
-    total = cuentas.count()
-    with_tag = cuentas.exclude(tag__isnull=True).exclude(tag="").count()
+    assets = AccountInfo.objects.all()
+    total = assets.count()
+    with_tag = assets.exclude(tag__isnull=True).exclude(tag="").count()
 
     buildings = {}
-    for c in cuentas.exclude(tag__isnull=True).exclude(tag=""):
-        b = c.tag.split("-")[0] if "-" in c.tag else c.tag
+    for a in assets.exclude(tag__isnull=True).exclude(tag=""):
+        b = a.tag.split("-")[0] if "-" in a.tag else a.tag
         buildings[b] = buildings.get(b, 0) + 1
 
     return JsonResponse({
         "total": total,
         "with_tag": with_tag,
         "without_tag": total - with_tag,
-        "virtual_machines": cuentas.filter(fields_3="MV").count(),
-        "empty_inventory": cuentas.filter(Q(fields_3__isnull=True) | Q(fields_3="")).count(),
+        "virtual_machines": assets.filter(fields_3="MV").count(),
+        "empty_inventory": assets.filter(Q(fields_3__isnull=True) | Q(fields_3="")).count(),
         "buildings": buildings,
     })
 
@@ -221,7 +221,7 @@ class CustomLoginView(LoginView):
             login(request, user)
             return redirect("dashboard")
         else:
-            messages.error(request, "Nombre de usuario o contraseña incorrectos.")
+            messages.error(request, "Invalid username or password.")
             return self.get(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
@@ -238,7 +238,7 @@ def register(request):
             login(request, user)
             return redirect("dashboard")
         except Exception as e:
-            messages.error(request, f"Error al registrar: {e}")
+            messages.error(request, f"Registration error: {e}")
     return render(request, "register.html")
 
 

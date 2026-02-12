@@ -21,89 +21,91 @@ logger = logging.getLogger(__name__)
 class ExcelDataSources:
     """Loads and provides access to Excel-based data sources."""
 
-    df_economia: pd.DataFrame = field(default_factory=pd.DataFrame)
-    df_clasificador: pd.DataFrame = field(default_factory=pd.DataFrame)
-    _inventarios_limpios: Optional[pd.Index] = field(default=None, repr=False)
+    df_finance: pd.DataFrame = field(default_factory=pd.DataFrame)
+    df_classifier: pd.DataFrame = field(default_factory=pd.DataFrame)
+    _clean_inventories: Optional[pd.Index] = field(default=None, repr=False)
 
     @classmethod
     def load(
         cls,
-        archivo_economia: str,
-        archivo_clasificador: str,
-        skip_filas_economia: int = 8,
-        columnas_economia: list[int] | None = None,
-        columnas_clasificador: list[int] | None = None,
+        finance_file: str,
+        classifier_file: str,
+        skip_finance_rows: int = 8,
+        finance_columns: list[int] | None = None,
+        classifier_columns: list[int] | None = None,
     ) -> "ExcelDataSources":
         """
         Load both Excel data sources from disk.
 
         Args:
-            archivo_economia: Path to the AR01 Finance Excel file.
-            archivo_clasificador: Path to the Locations Classifier Excel file.
-            skip_filas_economia: Number of header rows to skip in AR01.
-            columnas_economia: Column indices to read from AR01 [No_inventario, Local].
-            columnas_clasificador: Column indices from classifier [ID_LOCAL, DESCRIP, EDIFICIO].
+            finance_file: Path to the AR01 Finance Excel file.
+            classifier_file: Path to the Locations Classifier Excel file.
+            skip_finance_rows: Number of header rows to skip in AR01.
+            finance_columns: Column indices to read from AR01 [Inventory_No, Location].
+            classifier_columns: Column indices from classifier [LOCATION_ID, DESCRIPTION, BUILDING].
         """
-        if columnas_economia is None:
-            columnas_economia = [5, 8]
-        if columnas_clasificador is None:
-            columnas_clasificador = [4, 5, 6]
+        if finance_columns is None:
+            finance_columns = [5, 8]
+        if classifier_columns is None:
+            classifier_columns = [4, 5, 6]
 
-        logger.info(f"Cargando Excel de Economía: {archivo_economia}")
-        df_eco = pd.read_excel(
-            archivo_economia,
-            skiprows=skip_filas_economia,
-            usecols=columnas_economia,
+        logger.info(f"Loading Finance Excel: {finance_file}")
+        df_fin = pd.read_excel(
+            finance_file,
+            skiprows=skip_finance_rows,
+            usecols=finance_columns,
         )
 
-        logger.info(f"Cargando Clasificador de Locales: {archivo_clasificador}")
-        df_clas = pd.read_excel(archivo_clasificador, usecols=columnas_clasificador)
+        logger.info(f"Loading Locations Classifier: {classifier_file}")
+        df_clas = pd.read_excel(classifier_file, usecols=classifier_columns)
 
-        instance = cls(df_economia=df_eco, df_clasificador=df_clas)
+        instance = cls(df_finance=df_fin, df_classifier=df_clas)
         return instance
 
     @property
-    def inventarios_AR01_limpios(self) -> list[str]:
+    def clean_ar01_inventories(self) -> list[str]:
         """Return cleaned inventory numbers from the AR01 report."""
-        return self.df_economia.iloc[:, 0].astype(str).str.strip().values.tolist()
+        return self.df_finance.iloc[:, 0].astype(str).str.strip().values.tolist()
 
-    def buscar_inventario_y_local(self, numero_inventario: str) -> Optional[str]:
+    def find_inventory_location(self, inventory_number: str) -> Optional[str]:
         """
         Look up an inventory number in the AR01 and return its office code.
 
         Args:
-            numero_inventario: The inventory number to search for.
+            inventory_number: The inventory number to search for.
 
         Returns:
-            The office code (local) if found, None otherwise.
+            The office code (location) if found, None otherwise.
         """
-        numero_inventario = numero_inventario.strip()
-        col_inventario = self.df_economia.iloc[:, 0].astype(str).str.strip()
+        inventory_number = str(inventory_number).strip()
+        inventory_col = self.df_finance.iloc[:, 0].astype(str).str.strip()
 
-        if numero_inventario in col_inventario.values:
-            idx = col_inventario[col_inventario == numero_inventario].index[0]
-            local = self.df_economia.iloc[idx, 1]
-            return local.strip() if isinstance(local, str) else local
+        # Find matching rows
+        mask = (inventory_col == inventory_number)
+        if mask.any():
+            idx = mask.idxmax()  # Get first matching index
+            location = self.df_finance.iloc[idx, 1]
+            return str(location).strip() if pd.notna(location) else None
         return None
 
-    def buscar_valores_en_clasificador(
-        self, local: str
+    def find_classifier_values(
+        self, location: str
     ) -> Optional[tuple[str, str]]:
         """
         Look up an office code in the Locations Classifier.
 
         Args:
-            local: The office code to look up.
+            location: The office code to look up.
 
         Returns:
             Tuple of (description, building) if found, None otherwise.
         """
-        local = str(local).strip()
-        fila = self.df_clasificador[
-            self.df_clasificador.iloc[:, 0].astype(str).str.strip() == local
+        location = str(location).strip()
+        row = self.df_classifier[
+            self.df_classifier.iloc[:, 0].astype(str).str.strip() == location
         ]
-        if not fila.empty:
-            descrip_local = str(fila.iloc[0, 1]).strip().replace(" ", "_")
-            edificio = str(fila.iloc[0, 2]).strip().replace(" ", "_")
-            return descrip_local, edificio
+        if not row.empty:
+            location_desc = str(row.iloc[0, 1]).strip().replace(" ", "_")
+            building = str(row.iloc[0, 2]).strip().replace(" ", "_")
+            return location_desc, building
         return None

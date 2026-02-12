@@ -19,7 +19,7 @@
 │             │              │                 │                 │
 │    ┌────────▼───┐  ┌───────▼──┐  ┌───────────▼──────┐          │
 │    │   MySQL    │  │  AR01    │  │   Locations      │          │
-│    │  OCS Inv.  │  │  Excel   │  │   Classifier     │          │
+│    │  or SQLite │  │  Excel   │  │   Classifier     │          │
 │    │ (Hardware) │  │ (Finance)│  │   (HR/Excel)     │          │
 │    └────────────┘  └──────────┘  └──────────────────┘          │
 └─────────────────────────────────────────────────────────────────┘
@@ -29,19 +29,20 @@
 
 ### 1. Data Layer
 
-**MySQL Database (OCS Inventory)**
+**Database (OCS Inventory)**
 - Primary source of truth for IT assets
+- Supports **SQLite** (default/free) and **MySQL** (production)
 - Tables: `accountinfo`, `hardware`, managed by OCS Inventory NG
 - Contains: hardware specs, BIOS info, network config, last inventory date
 
 **Finance Excel (AR01 Report)**
-- Format: `.xlsx` with columns `Nro. Inventario`, `Edificio`, `Oficina`
+- Format: `.xlsx` with columns `Inventory No.`, `Building`, `Office`
 - Updated monthly by Finance department
 - Source of truth for physical asset locations
 
 **HR Locations Classifier**
 - Format: `.xlsx` mapping office codes to building names
-- Columns: `ID`, `Local`, `Edificio`
+- Columns: `ID`, `Location`, `Building`
 - Maintained by HR department
 
 ### 2. Services Layer
@@ -52,7 +53,7 @@ ETL module for loading external data:
 class DataSourceManager:
     get_ar01_data()           # Reads Finance Excel → DataFrame
     get_clasificador_data()   # Reads HR Excel → DataFrame
-    get_ocs_assets()          # Queries MySQL → AccountInfo objects
+    get_ocs_assets()          # Queries DB via Django ORM → AccountInfo objects
 ```
 
 #### Processor (`inventario/services/processors.py`)
@@ -115,23 +116,23 @@ class ExcelReporter:
     generate_report(report_data) → .xlsx file
     
     # Sheets:
-    # 1. Vacíos (empty inventory numbers)
-    # 2. MV (virtual machines)
-    # 3. Duplicados (duplicate inventory numbers)
-    # 4. Sin TAG después de actualizar
-    # 5. No están en AR01
-    # 6. Están en AR01 pero no en BD
-    # 7. No están en clasificador
+    # 1. Empty (empty inventory numbers)
+    # 2. VM (virtual machines)
+    # 3. Duplicates (duplicate inventory numbers)
+    # 4. No TAG after update
+    # 5. Not in AR01
+    # 6. In AR01 but not in DB
+    # 7. Not in classifier
 ```
 
 ### 3. Presentation Layer
 
 #### Views (`inventario/views.py`)
 - `login_view()` — Authentication
-- `dashboard_view()` — Main asset table
-- `accountinfo_view()` — Asset detail page  
-- `reportes_view()` — Reports list
-- `upload_reportes()` — Trigger TAG sync
+- `dashboard_view()` — Main statistics overview
+- `show_assets()` — Asset detail table  
+- `show_reports()` — Reports list
+- `sync_tags()` — Trigger TAG sync
 - `analytics_view()` — AI analytics dashboard
 - `api_analytics()` — JSON API endpoint
 
@@ -252,11 +253,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.11, 3.12]
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: test_ocs
     steps:
       - python -m pytest --cov=inventario
   

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class ReportGenerator:
     """Generates Excel reports from TAG synchronization results."""
 
-    def __init__(self, output_path: str = "Reportes.xlsx"):
+    def __init__(self, output_path: str = "Reports.xlsx"):
         self.output_path = output_path
 
     def generate(self, result: SyncResult) -> Path:
@@ -32,44 +32,44 @@ class ReportGenerator:
         Returns:
             Path to the generated Excel file.
         """
-        cols = result.nombres_columnas
+        cols = result.column_names
 
-        df_vacios = pd.DataFrame(result.inventarios_vacios, columns=cols)
-        df_mv = pd.DataFrame(result.inventarios_mv, columns=cols)
-        df_duplicados = pd.DataFrame(result.inventarios_duplicados, columns=cols)
-        df_no_ar01 = pd.DataFrame(result.inv_bd_no_estan_AR01, columns=cols)
+        df_empty = pd.DataFrame(result.empty_inventories, columns=cols)
+        df_vm = pd.DataFrame(result.vm_inventories, columns=cols)
+        df_duplicates = pd.DataFrame(result.duplicate_inventories, columns=cols)
+        df_not_in_ar01 = pd.DataFrame(result.db_not_in_ar01, columns=cols)
 
-        df_locales_no_clasif = pd.DataFrame(
-            result.locales_no_estan_clasificador,
-            columns=["Inventario", "Local"],
+        df_locations_not_classified = pd.DataFrame(
+            result.locations_not_in_classifier,
+            columns=["Inventory", "Location"],
         )
 
-        df_ar01_no_bd = pd.DataFrame(
+        df_ar01_not_in_db = pd.DataFrame(
             {
-                "Inventario en AR01 no en DB": result.inventarios_AR01_no_en_BD,
-                "Local Correspondiente": result.locales_correspondientes,
+                "AR01 Inventory not in DB": result.ar01_not_in_db,
+                "Corresponding Location": result.corresponding_locations,
             }
         )
 
         sheets = [
-            ("Inventarios_Vacíos", df_vacios),
-            ("Inventarios_MV", df_mv),
-            ("Locales_no_Clasificador", df_locales_no_clasif),
-            ("Inventarios_Duplicados", df_duplicados),
-            ("Inv_BD_no_en_AR01", df_no_ar01),
-            ("Inv_AR01_no_en_DB", df_ar01_no_bd),
+            ("Empty_Inventories", df_empty),
+            ("VM_Inventories", df_vm),
+            ("Locations_Not_In_Classifier", df_locations_not_classified),
+            ("Duplicate_Inventories", df_duplicates),
+            ("DB_Not_In_AR01", df_not_in_ar01),
+            ("AR01_Not_In_DB", df_ar01_not_in_db),
         ]
 
         with pd.ExcelWriter(self.output_path, engine="openpyxl") as writer:
             for sheet_name, df in sheets:
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
                 logger.info(
-                    f"  Hoja '{sheet_name}': {len(df)} registros"
+                    f"  Sheet '{sheet_name}': {len(df)} records"
                 )
             self._auto_fit_columns(writer)
 
         output = Path(self.output_path)
-        logger.info(f"Reporte generado: {output.absolute()}")
+        logger.info(f"Report generated: {output.absolute()}")
         return output
 
     @staticmethod

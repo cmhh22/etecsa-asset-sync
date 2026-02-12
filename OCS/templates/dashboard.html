@@ -15,7 +15,7 @@
                 </div>
                 <div>
                     <div class="stat-value">{{ total_assets }}</div>
-                    <div class="stat-label">Total Activos</div>
+                    <div class="stat-label">Total Assets</div>
                 </div>
             </div>
         </div>
@@ -28,7 +28,7 @@
                 </div>
                 <div>
                     <div class="stat-value">{{ with_tag }}</div>
-                    <div class="stat-label">Con TAG</div>
+                    <div class="stat-label">With TAG</div>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
                 </div>
                 <div>
                     <div class="stat-value">{{ without_tag }}</div>
-                    <div class="stat-label">Sin TAG</div>
+                    <div class="stat-label">Without TAG</div>
                 </div>
             </div>
         </div>
@@ -54,7 +54,7 @@
                 </div>
                 <div>
                     <div class="stat-value">{{ virtual_machines }}</div>
-                    <div class="stat-label">Máquinas Virtuales</div>
+                    <div class="stat-label">Virtual Machines</div>
                 </div>
             </div>
         </div>
@@ -67,8 +67,8 @@
     <div class="col-lg-5">
         <div class="card content-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-pie-chart me-2"></i>Estado de TAGs</span>
-                <span class="badge bg-primary badge-etecsa">{{ tag_percentage }}% completado</span>
+                <span><i class="bi bi-pie-chart me-2"></i>TAG Status</span>
+                <span class="badge bg-primary badge-etecsa">{{ tag_percentage }}% complete</span>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
                 <canvas id="tagStatusChart" style="max-height: 280px;"></canvas>
@@ -80,7 +80,7 @@
     <div class="col-lg-7">
         <div class="card content-card h-100">
             <div class="card-header">
-                <i class="bi bi-building me-2"></i>Activos por Edificio
+                <i class="bi bi-building me-2"></i>Assets by Building
             </div>
             <div class="card-body">
                 <canvas id="buildingsChart" style="max-height: 280px;"></canvas>
@@ -95,26 +95,26 @@
     <div class="col-lg-4">
         <div class="card content-card h-100">
             <div class="card-header">
-                <i class="bi bi-lightning me-2"></i>Acciones Rápidas
+                <i class="bi bi-lightning me-2"></i>Quick Actions
             </div>
             <div class="card-body d-grid gap-2">
-                <form action="{% url 'actualizar_tags' %}" method="post">
+                <form action="{% url 'sync_tags' %}" method="post">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-etecsa w-100" onclick="showLoading()">
-                        <i class="bi bi-arrow-repeat me-2"></i>Sincronizar TAGs
+                        <i class="bi bi-arrow-repeat me-2"></i>Sync TAGs
                     </button>
                 </form>
                 <a href="{% url 'accountinfo' %}" class="btn btn-outline-primary">
-                    <i class="bi bi-table me-2"></i>Ver Inventario Completo
+                    <i class="bi bi-table me-2"></i>View Full Inventory
                 </a>
-                <a href="{% url 'mostrar_reportes' %}" class="btn btn-outline-secondary">
-                    <i class="bi bi-file-earmark-bar-graph me-2"></i>Ver Reportes
+                <a href="{% url 'show_reports' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>View Reports
                 </a>
-                <a href="{% url 'exportar_reportes' %}" class="btn btn-outline-success">
-                    <i class="bi bi-download me-2"></i>Descargar Excel de Reportes
+                <a href="{% url 'export_reports' %}" class="btn btn-outline-success">
+                    <i class="bi bi-download me-2"></i>Download Report Excel
                 </a>
-                <a href="{% url 'descargar_registros' %}" class="btn btn-outline-dark">
-                    <i class="bi bi-file-text me-2"></i>Descargar Log de Sincronización
+                <a href="{% url 'download_logs' %}" class="btn btn-outline-dark">
+                    <i class="bi bi-file-text me-2"></i>Download Sync Log
                 </a>
             </div>
         </div>
@@ -124,8 +124,8 @@
     <div class="col-lg-8">
         <div class="card content-card h-100">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-clock-history me-2"></i>Últimos Registros</span>
-                <a href="{% url 'accountinfo' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+                <span><i class="bi bi-clock-history me-2"></i>Recent Records</span>
+                <a href="{% url 'accountinfo' %}" class="btn btn-sm btn-outline-primary">View all</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -133,7 +133,7 @@
                         <thead>
                             <tr>
                                 <th>HW ID</th>
-                                <th>Inventario</th>
+                                <th>Inventory</th>
                                 <th>TAG</th>
                                 <th>Estado</th>
                             </tr>
@@ -147,22 +147,22 @@
                                     {% if asset.tag %}
                                         <span class="badge bg-success badge-etecsa">{{ asset.tag }}</span>
                                     {% else %}
-                                        <span class="badge bg-secondary badge-etecsa">Sin TAG</span>
+                                        <span class="badge bg-secondary badge-etecsa">No TAG</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if asset.fields_3 == "MV" %}
                                         <span class="badge bg-info badge-etecsa">VM</span>
                                     {% elif asset.fields_3 %}
-                                        <span class="badge bg-primary badge-etecsa">Físico</span>
+                                        <span class="badge bg-primary badge-etecsa">Physical</span>
                                     {% else %}
-                                        <span class="badge bg-warning badge-etecsa">Vacío</span>
+                                        <span class="badge bg-warning badge-etecsa">Empty</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">No hay registros aún</td>
+                                <td colspan="4" class="text-center text-muted py-4">No records yet</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -182,7 +182,7 @@
     new Chart(document.getElementById('tagStatusChart'), {
         type: 'doughnut',
         data: {
-            labels: ['Con TAG', 'Sin TAG', 'Máquinas Virtuales', 'Inventario Vacío'],
+            labels: ['With TAG', 'Without TAG', 'Virtual Machines', 'Empty Inventory'],
             datasets: [{
                 data: [{{ with_tag }}, {{ without_tag }}, {{ virtual_machines }}, {{ empty_inventory }}],
                 backgroundColor: ['#38a169', '#e53e3e', '#3182ce', '#d69e2e'],
@@ -212,7 +212,7 @@
             data: {
                 labels: buildingLabels.map(l => l.replace(/_/g, ' ')),
                 datasets: [{
-                    label: 'Activos',
+                    label: 'Assets',
                     data: buildingCounts,
                     backgroundColor: '#3182ce',
                     borderRadius: 6,
@@ -240,7 +240,7 @@
         });
     } else {
         document.getElementById('buildingsChart').parentElement.innerHTML =
-            '<div class="text-center text-muted py-5"><i class="bi bi-bar-chart fs-1 d-block mb-2"></i>Ejecute la sincronización para ver datos</div>';
+            '<div class="text-center text-muted py-5"><i class="bi bi-bar-chart fs-1 d-block mb-2"></i>Run synchronization to see data</div>';
     }
 </script>
 {% endblock %}

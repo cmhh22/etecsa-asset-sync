@@ -78,9 +78,9 @@ class Command(BaseCommand):
             # Duplicate inventory number (anomaly)
             ("1015", "DTCFG-Despacho Dir", "DTCFG", "180045", "Juan Perez", "180045"),
             # Empty inventory (anomaly)
-            ("1016", "DTCFG-SinDoc", "DTCFG", "", "Sin Inventario", ""),
+            ("1016", "DTCFG-SinDoc", "DTCFG", "", "No Inventory", ""),
             # Missing TAG (anomaly)
-            ("1017", "", "", "180060", "Nuevo Equipo", "180060"),
+            ("1017", "", "", "180060", "New Equipment", "180060"),
             ("1018", "CCFG_CENTRO-Planificacion", "CCFG_CENTRO", "180061", "Laura Vega", "180061"),
             ("1019", "MUN_CRUCES-Comercial", "MUN_CRUCES", "180062", "Diego Mora", "180062"),
             # Orphan asset — no tag, no building (anomaly)

@@ -12,13 +12,13 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
 
     # Assets
-    path('accountinfo/', views.mostrar_accountinfo, name='accountinfo'),
-    path('actualizar_tags/', views.actualizar_tags, name='actualizar_tags'),
+    path('accountinfo/', views.show_assets, name='accountinfo'),
+    path('sync-tags/', views.sync_tags, name='sync_tags'),
 
     # Reports
-    path('reportes/', views.mostrar_reportes, name='mostrar_reportes'),
-    path('descargar_registros/', views.descargar_registros, name='descargar_registros'),
-    path('exportar-reportes/', views.exportar_reportes, name='exportar_reportes'),
+    path('reports/', views.show_reports, name='show_reports'),
+    path('download-logs/', views.download_logs, name='download_logs'),
+    path('export-reports/', views.export_reports, name='export_reports'),
 
     # API
     path('api/dashboard-stats/', views.api_dashboard_stats, name='api_dashboard_stats'),

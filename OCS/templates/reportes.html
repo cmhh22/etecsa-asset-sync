@@ -1,34 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}Reportes — ETECSA Asset Sync{% endblock %}
+{% block title %}Reports — ETECSA Asset Sync{% endblock %}
 {% block nav_reports %}active{% endblock %}
-{% block page_title %}Reportes de Sincronización{% endblock %}
+{% block page_title %}Sync Reports{% endblock %}
 
 {% block content %}
 <!-- Sheet Selector & Actions -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div class="d-flex align-items-center gap-3">
         <form method="GET" class="d-flex align-items-center gap-2">
-            <label for="hoja" class="form-label mb-0 fw-semibold text-secondary">Hoja:</label>
-            <select name="hoja" id="hoja" class="form-select form-select-sm" style="width: 280px;"
+            <label for="sheet" class="form-label mb-0 fw-semibold text-secondary">Sheet:</label>
+            <select name="sheet" id="sheet" class="form-select form-select-sm" style="width: 280px;"
                     onchange="this.form.submit()">
-                {% for hoja in hojas %}
-                    <option value="{{ hoja }}" {% if hoja == hoja_seleccionada %}selected{% endif %}>
-                        {{ hoja }}
+                {% for sheet in sheets %}
+                    <option value="{{ sheet }}" {% if sheet == selected_sheet %}selected{% endif %}>
+                        {{ sheet }}
                     </option>
                 {% endfor %}
             </select>
         </form>
         <span class="badge bg-secondary badge-etecsa" id="rowCount">
-            {{ filas|length }} registros
+            {{ rows|length }} records
         </span>
     </div>
     <div class="d-flex gap-2">
-        <a href="{% url 'exportar_reportes' %}" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-download me-1"></i> Exportar Excel
+        <a href="{% url 'export_reports' %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i> Export Excel
         </a>
         <a href="{% url 'accountinfo' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Volver
+            <i class="bi bi-arrow-left me-1"></i> Back
         </a>
     </div>
 </div>
@@ -51,14 +51,14 @@
         <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3"
              style="background: #f0f5ff; border: 1px solid #d0e0f5;">
             <i class="bi bi-file-earmark-spreadsheet text-primary"></i>
-            <span class="fw-semibold text-primary">{{ hoja_seleccionada }}</span>
+            <span class="fw-semibold text-primary">{{ selected_sheet }}</span>
         </div>
     </div>
     <div class="col-auto">
         <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-3"
              style="background: #f5f5f5;">
             <i class="bi bi-grid-3x3 text-secondary"></i>
-            <span class="text-secondary">{{ hojas|length }} hojas disponibles</span>
+            <span class="text-secondary">{{ sheets|length }} sheets available</span>
         </div>
     </div>
 </div>
@@ -71,24 +71,24 @@
                 <thead>
                     <tr>
                         <th style="width: 40px;">#</th>
-                        {% for col in filas.0.keys %}
+                        {% for col in rows.0.keys %}
                             <th>{{ col }}</th>
                         {% endfor %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for fila in filas %}
+                    {% for row in rows %}
                     <tr>
                         <td class="text-muted">{{ forloop.counter }}</td>
-                        {% for valor in fila.values %}
-                            <td>{{ valor|default:"—" }}</td>
+                        {% for value in row.values %}
+                            <td>{{ value|default:"—" }}</td>
                         {% endfor %}
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="20" class="text-center text-muted py-5">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            Esta hoja no contiene datos
+                            This sheet has no data
                         </td>
                     </tr>
                     {% endfor %}
@@ -103,6 +103,6 @@
 <script>
     // Update row count on page load
     const rows = document.querySelectorAll('#reportTable tbody tr');
-    document.getElementById('rowCount').textContent = `${rows.length} registros`;
+    document.getElementById('rowCount').textContent = `${rows.length} records`;
 </script>
 {% endblock %}

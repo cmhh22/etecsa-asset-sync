@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}Sin Reportes — ETECSA Asset Sync{% endblock %}
+{% block title %}No Reports — ETECSA Asset Sync{% endblock %}
 {% block nav_reports %}active{% endblock %}
-{% block page_title %}Reportes{% endblock %}
+{% block page_title %}Reports{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-center align-items-center" style="min-height: 50vh;">
@@ -13,19 +13,19 @@
                 <i class="bi bi-file-earmark-x fs-1 text-primary"></i>
             </div>
         </div>
-        <h3 class="fw-bold text-dark mb-2">No hay reportes disponibles</h3>
+        <h3 class="fw-bold text-dark mb-2">No reports available</h3>
         <p class="text-muted mb-4" style="max-width: 420px;">
-            Aún no se ha ejecutado la sincronización de TAGs. 
-            Ejecute el proceso para generar los reportes de análisis.
+            TAG synchronization has not been run yet. 
+            Run the process to generate the analysis reports.
         </p>
         <div class="d-flex gap-2 justify-content-center">
             <a href="{% url 'accountinfo' %}" class="btn btn-etecsa">
-                <i class="bi bi-arrow-left me-1"></i> Ir al Inventario
+                <i class="bi bi-arrow-left me-1"></i> Go to Inventory
             </a>
-            <form action="{% url 'actualizar_tags' %}" method="post" class="d-inline">
+            <form action="{% url 'sync_tags' %}" method="post" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-primary" onclick="showLoading()">
-                    <i class="bi bi-arrow-repeat me-1"></i> Ejecutar Sincronización
+                    <i class="bi bi-arrow-repeat me-1"></i> Run Synchronization
                 </button>
             </form>
         </div>

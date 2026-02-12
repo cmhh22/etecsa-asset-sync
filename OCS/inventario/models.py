@@ -18,7 +18,7 @@ class AccountInfo(models.Model):
     fields_11 = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        db_table = 'accountinfo'  # Asegúrate de que coincida con el nombre de la tabla existente
+        db_table = 'accountinfo'  # Must match the existing table name
 
     def __str__(self):
         return f"{self.tag} - {self.usuario}"

@@ -1,6 +1,5 @@
 # Core
 Django==5.1.1
-mysqlclient==2.2.4
 
 # Data Processing
 pandas==2.2.3
@@ -25,8 +24,9 @@ pytz==2024.2
 six==1.16.0
 et-xmlfile==1.1.0
 
-# Database Connector (for sync engine)
-mysql-connector-python==8.4.0
+# Database Connectors (optional — only needed if using MySQL)
+# mysqlclient==2.2.4
+# mysql-connector-python==8.4.0
 
 # Testing
 pytest==8.3.3
