@@ -206,11 +206,15 @@ python -m pytest inventario/tests/test_analytics.py -v
 
 ---
 
-## Author
+## Authors
 
 **Carlos Manuel Hernández Hernández**  
 Cybernetics Student · Full-Stack Developer  
-📧 [GitHub](https://github.com/cmhh22)
+[GitHub](https://github.com/cmhh22)
+
+**Ariel David Toledo Rojas**  
+Cybernetics Student · Full-Stack Developer  
+[GitHub](https://github.com/ArielDavid234)
 
 ---
 
