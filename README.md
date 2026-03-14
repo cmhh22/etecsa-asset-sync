@@ -224,4 +224,4 @@ MIT License — see [LICENSE](LICENSE)
 
 ---
 
-**Built with real-world production experience at ETECSA** | [GitHub Issues](https://github.com/cmhh22/etecsa-asset-sync/issues)
+**Built with real-world production experience at ETECSA** | [GitHub Issues](https://github.com/cmhh22/etecsa-asset-sync/issues).
